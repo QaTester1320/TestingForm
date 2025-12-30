@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Testing Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .tabs { display: flex; background: white; border-radius: 8px 8px 0 0; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab { flex: 1; padding: 15px; background: #eee; cursor: pointer; text-align: center; transition: all 0.3s; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; background: white; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        textarea { height: 100px; resize: vertical; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; }
+        .checkbox-item { display: flex; align-items: center; gap: 5px; }
+        button { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #218838; }
+        .history-item { background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #007bff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #007bff; color: white; }
+        .status { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .pending { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 QA Testing Panel</h1>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('submit')">📤 Submit Test Request</div>
+            <div class="tab" onclick="switchTab('track')">📊 Track My Tests</div>
+        </div>
+        
+        <!-- Submit Form (Devs/Designers) -->
+        <div id="submit" class="tab-content active">
+            <h2>Submit Testing Request</h2>
+            <form id="testForm">
+                <div class="form-group">
+                    <label>Project/Feature Name *</label>
+                    <input type="text" id="project" required>
+                </div>
+                <div class="form-group">
+                    <label>Developer/Designer *</label>
+                    <input type="text" id="devName" required>
+                </div>
+                <div class="form-group">
+                    <label>Test Scope *</label>
+                    <select id="scope" required>
+                        <option value="">Select scope</option>
+                        <option value="changes-only">New Changes Only</option>
+                        <option value="full-site">Full Site Testing</option>
+                        <option value="specific-pages">Specific Pages</option>
+                        <option value="regression">Full Regression (All Features)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="pagesGroup" style="display:none;">
+                    <label>Specific Pages/URLs</label>
+                    <textarea id="pages" placeholder="Page1: /home&#10;Page2: /checkout"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Testing Type *</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="functional" value="functional">
+                            <label for="functional">Functional</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="responsive" value="responsive">
+                            <label for="responsive">Responsive</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="browser" value="browser">
+                            <label for="browser">Cross Browser</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="performance" value="performance">
+                            <label for="performance">Performance</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="accessibility" value="accessibility">
+                            <label for="accessibility">Accessibility</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Priority *</label>
+                    <select id="priority" required>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High 🔥</option>
+                        <option value="urgent">Urgent 🚨</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="datetime-local" id="deadline">
+                </div>
+                <div class="form-group">
+                    <label>Special Instructions</label>
+                    <textarea id="instructions" placeholder="e.g. Test only checkout flow, ignore login..."></textarea>
+                </div>
+                <button type="submit">🚀 Submit Test Request</button>
+            </form>
+        </div>
+        
+        <!-- QA Tracking Panel -->
+        <div id="track" class="tab-content">
+            <h2>📋 My Testing History</h2>
+            <div id="history"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if(tabName === 'submit') {
+                document.querySelector('.tab:nth-child(1)').classList.add('active');
+            } else {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+                loadHistory();
+            }
+        }
+        
+        // Show pages field based on scope
+        document.getElementById('scope').addEventListener('change', function() {
+            const pagesGroup = document.getElementById('pagesGroup');
+            pagesGroup.style.display = this.value === 'specific-pages' ? 'block' : 'none';
+        });
+        
+        // Form submission
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                id: Date.now(),
+                project: document.getElementById('project').value,
+                dev: document.getElementById('devName').value,
+                scope: document.getElementById('scope').value,
+                pages: document.getElementById('pages').value,
+                types: Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value),
+                priority: document.getElementById('priority').value,
+                deadline: document.getElementById('deadline').value,
+                instructions: document.getElementById('instructions').value,
+                status: 'pending',
+                testedBy: 'You',
+                timestamp: new Date().toLocaleString()
+            };
+            
+            // Save to localStorage
+            let history = JSON.parse(localStorage.getItem('qaHistory') || '[]');
+            history.unshift(formData);
+            localStorage.setItem('qaHistory', JSON.stringify(history.slice(0, 100))); // Keep last 100
+            
+            alert('✅ Test request submitted! Check Track tab.');
+            this.reset();
+            document.getElementById('pagesGroup').style.display = 'none';
+        });
+        
+        // Load history
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('qaHistory') || '[]');
+            const historyDiv = document.getElementById('history');
+            
+            if(history.length === 0) {
+                historyDiv.innerHTML = '<p>No test requests yet. Ask devs to submit requests!</p>';
+                return;
+            }
+            
+            let html = '<table><tr><th>ID</th><th>Project</th><th>Dev</th><th>Scope</th><th>Types</th><th>Priority</th><th>Status</th><th>Date</th></tr>';
+            
+            history.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.project}</td>
+                        <td>${item.dev}</td>
+                        <td>${item.scope.replace('-', ' ').toUpperCase()}</td>
+                        <td>${item.types.join(', ') || 'None'}</td>
+                        <td>${item.priority}</td>
+                        <td><span class="status ${item.status}">${item.status.toUpperCase()}</span></td>
+                        <td>${item.timestamp}</td>
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            historyDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
