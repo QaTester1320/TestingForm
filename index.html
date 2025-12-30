@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 QA Testing Panel - COMPLETE FINAL v4</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 20px; 
+        }
+        .container { 
+            max-width: 1400px; margin: 0 auto; 
+            background: white; border-radius: 20px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden;
+        }
+        .header { 
+            background: linear-gradient(135deg, #007bff, #0056b3); 
+            color: white; padding: 30px; text-align: center; 
+        }
+        .tabs { 
+            display: flex; background: #f8f9fa; 
+        }
+        .tab { 
+            flex: 1; padding: 20px; cursor: pointer; text-align: center; 
+            transition: all 0.3s; font-weight: 600; position: relative;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active { 
+            background: white; color: #007bff; 
+            border-bottom-color: #007bff;
+        }
+        .tab-content { 
+            display: none; padding: 40px; min-height: 70vh;
+        }
+        .tab-content.active { display: block; }
+        
+        .form-group { 
+            margin-bottom: 30px; 
+        }
+        label { 
+            display: block; margin-bottom: 10px; font-weight: 600; 
+            color: #2c3e50; font-size: 15px;
+        }
+        input, select, textarea { 
+            width: 100%; padding: 15px; border: 2px solid #e9ecef; 
+            border-radius: 12px; font-size: 15px; transition: all 0.3s;
+            background: #fff;
+        }
+        input:focus, select:focus, textarea:focus { 
+            outline: none; border-color: #007bff; 
+            box-shadow: 0 0 0 4px rgba(0,123,255,0.1);
+        }
+        textarea { height: 120px; resize: vertical; }
+        
+        .checkbox-group { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; padding: 25px; background: linear-gradient(135deg, #f8f9ff, #e8f4fd); 
+            border-radius: 15px; border: 2px solid #007bff; 
+        }
+        .checkbox-item, .radio-item { 
+            display: flex; align-items: flex-start; gap: 12px; 
+            font-size: 15px; cursor: pointer;
+        }
+        .checkbox-item input[type="checkbox"], 
+        .checkbox-item input[type="radio"] { 
+            width: 20px; height: 20px; margin-top: 2px; cursor: pointer;
+        }
+        
+        .radio-group { 
+            background: #fff3cd; padding: 20px; border-radius: 10px; 
+            border-left: 5px solid #ffc107; margin-top: 15px;
+        }
+        .radio-item { padding: 10px 0; border-bottom: 1px solid #f8f7f7; }
+        .radio-item:last-child { border-bottom: none; }
+        
+        .number-inputs { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; margin-top: 20px; padding: 20px; 
+            background: #e8f5e8; border-radius: 12px; border: 2px dashed #28a745;
+        }
+        .number-input { display: flex; flex-direction: column; }
+        .number-input label { font-weight: 500; color: #28a745; font-size: 13px; }
+        
+        .special-section { 
+            border: 3px dashed #007bff; padding: 25px; 
+            border-radius: 15px; background: linear-gradient(135deg, #f0f8ff, #e3f2fd);
+            margin-bottom: 30px;
+        }
+        
+        button { 
+            background: linear-gradient(135deg, #28a745, #20c997); 
+            color: white; padding: 18px 50px; border: none; 
+            border-radius: 50px; cursor: pointer; font-size: 18px; 
+            font-weight: 700; box-shadow: 0 10px 30px rgba(40,167,69,0.3);
+            transition: all 0.3s; width: 100%; margin-top: 20px;
+        }
+        button:hover { 
+            transform: translateY(-3px); box-shadow: 0 15px 40px rgba(40,167,69,0.4);
+        }
+        
+        table { 
+            width: 100%; border-collapse: collapse; margin-top: 30px; 
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        th, td { 
+            padding: 20px; text-align: left; border-bottom: 1px solid #f1f3f4;
+        }
+        th { 
+            background: linear-gradient(135deg, #007bff, #0056b3); 
+            color: white; font-weight: 700; font-size: 15px;
+        }
+        .status-select { 
+            padding: 12px 20px; border-radius: 25px; border: none; 
+            font-weight: 700; font-size: 15px; min-width: 150px;
+            cursor: pointer;
+        }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status['in-progress'] { background: #cce5ff; color: #004085; }
+        .status.completed { background: #d4edda; color: #155724; }
+        
+        .actions button { 
+            width: auto; padding: 8px 20px; font-size: 13px; margin: 0 5px;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .tabs { flex-direction: column; }
+            .tab { padding: 15px; }
+            .tab-content { padding: 20px; }
+            .checkbox-group { grid-template-columns: 1fr; }
+            .number-inputs { grid-template-columns: 1fr; }
+            table { font-size: 14px; }
+            th, td { padding: 12px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 QA Testing Panel - COMPLETE FINAL v4</h1>
+            <p>Eliminate ALL communication gaps with Developers/Designers</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('submit')">📤 Submit Test Request</div>
+            <div class="tab" onclick="switchTab('track')">📊 Track & Update Status</div>
+        </div>
+        
+        <!-- ALL FIELDS FROM v2 + Screenshot Layout + Special Instructions -->
+        <div id="submit" class="tab-content active">
+            <form id="testForm">
+                <div class="form-group">
+                    <label>Project/Feature Name <span style="color:#e74c3c">*</span></label>
+                    <input type="text" id="project" placeholder="e.g. Checkout Page v2.0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Developer/Designer <span style="color:#e74c3c">*</span></label>
+                    <input type="text" id="devName" placeholder="John Doe (Dev) / Jane Smith (Designer)" required>
+                </div>
+
+                <!-- EXACT Screenshot Layout -->
+                <div class="form-group">
+                    <label>Testing Scope <span style="color:#e74c3c">*</span></label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="newFeature" checked disabled>
+                            <label for="newFeature">✔ New feature testing: YES</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bugFix" checked disabled>
+                            <label for="bugFix">✔ Bug fix validation: YES</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="smoke" checked disabled>
+                            <label for="smoke">✔ Smoke testing: YES</label>
+                        </div>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" name="regression" id="fullReg" value="full">
+                                <label for="fullReg">☐ Full regression</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="regression" id="partialReg" value="partial">
+                                <label for="partialReg">☐ Partial regression (modules mentioned below)</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="regression" id="noReg" value="none" checked>
+                                <label for="noReg">☐ No regression required</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BrowserStack - ALL FIELDS RESTORED -->
+                <div class="form-group">
+                    <label>BrowserStack required?</label>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="browserstack">
+                        <label for="browserstack">Yes (specify devices below)</label>
+                    </div>
+                    <div id="deviceGroup" style="display:none;" class="number-inputs">
+                        <div class="number-input">
+                            <label>iOS [devices]</label>
+                            <input type="number" id="iosDevices" min="0" max="20" value="0">
+                        </div>
+                        <div class="number-input">
+                            <label>iPad [devices]</label>
+                            <input type="number" id="ipadDevices" min="0" max="20" value="0">
+                        </div>
+                        <div class="number-input">
+                            <label>Android [devices]</label>
+                            <input type="number" id="androidDevices" min="0" max="20" value="0">
+                        </div>
+                        <div class="number-input">
+                            <label>macOS [required]</label>
+                            <input type="checkbox" id="macos">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ALL CRITICAL FIELDS -->
+                <div class="form-group special-section">
+                    <label>Impacted modules (if any):</label>
+                    <textarea id="impactedModules" placeholder="e.g. Checkout, User Profile, Payment Gateway, Cart..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Expected URLs/Pages to test:</label>
+                    <textarea id="testUrls" placeholder="https://staging.example.com/checkout&#10;https://staging.example.com/profile&#10;https://qa.example.com/cart"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Browsers:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item"><input type="checkbox" id="chrome" value="Chrome"> Chrome</div>
+                        <div class="checkbox-item"><input type="checkbox" id="firefox" value="Firefox"> Firefox</div>
+                        <div class="checkbox-item"><input type="checkbox" id="safari" value="Safari"> Safari</div>
+                        <div class="checkbox-item"><input type="checkbox" id="mobile" value="Mobile"> Mobile</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Environment:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item"><input type="checkbox" id="staging" value="Staging"> Staging</div>
+                        <div class="checkbox-item"><input type="checkbox" id="qa" value="QA" checked> QA</div>
+                        <div class="checkbox-item"><input type="checkbox" id="prod" value="Production"> Production</div>
+                        <div class="checkbox-item"><input type="checkbox" id="dev" value="Dev"> Dev</div>
+                    </div>
+                </div>
+
+                <!-- SPECIAL INSTRUCTIONS - REQUIRED -->
+                <div class="form-group special-section">
+                    <label>Special Instructions <span style="color:#f39c12">MUST FILL</span></label>
+                    <textarea id="specialInstructions" required placeholder="e.g. 'Test only checkout flow, ignore login errors, don't test old features, focus on payment gateway...'"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Priority <span style="color:#e74c3c">*</span></label>
+                    <select id="priority" required>
+                        <option value="">Select Priority</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High 🔥</option>
+                        <option value="urgent">Urgent 🚨</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Deadline (Optional)</label>
+                    <input type="datetime-local" id="deadline">
+                </div>
+
+                <button type="submit">✅ Please confirm & Submit Test Request</button>
+            </form>
+        </div>
+
+        <!-- COMPLETE Tracking Panel -->
+        <div id="track" class="tab-content">
+            <h2 style="margin-bottom: 30px;">📋 Testing History & Status Updates</h2>
+            <div id="history"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            if(tabName === 'track') loadHistory();
+        }
+
+        // Dynamic shows
+        document.getElementById('browserstack').addEventListener('change', function() {
+            document.getElementById('deviceGroup').style.display = this.checked ? 'grid' : 'none';
+        });
+
+        // Form submission - CAPTURES ALL FIELDS
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const browsers = Array.from(document.querySelectorAll('input[id="chrome"],input[id="firefox"],input[id="safari"],input[id="mobile"]:checked')).map(cb => cb.value);
+            const environments = Array.from(document.querySelectorAll('input[id="staging"],input[id="qa"],input[id="prod"],input[id="dev"]:checked')).map(cb => cb.value);
+            
+            const formData = {
+                id: Date.now(),
+                project: document.getElementById('project').value,
+                dev: document.getElementById('devName').value,
+                newFeature: document.getElementById('newFeature').checked,
+                bugFix: document.getElementById('bugFix').checked,
+                smoke: document.getElementById('smoke').checked,
+                regression: document.querySelector('input[name="regression"]:checked').value,
+                browserstack: document.getElementById('browserstack').checked,
+                iosDevices: document.getElementById('iosDevices').value || 0,
+                ipadDevices: document.getElementById('ipadDevices').value || 0,
+                androidDevices: document.getElementById('androidDevices').value || 0,
+                macos: document.getElementById('macos').checked,
+                impactedModules: document.getElementById('impactedModules').value,
+                testUrls: document.getElementById('testUrls').value,
+                browsers: browsers.length ? browsers : ['All'],
+                environments: environments.length ? environments : ['QA'],
+                specialInstructions: document.getElementById('specialInstructions').value,
+                priority: document.getElementById('priority').value,
+                deadline: document.getElementById('deadline').value,
+                status: 'pending',
+                timestamp: new Date().toLocaleString()
+            };
+            
+            let history = JSON.parse(localStorage.getItem('qaHistory') || '[]');
+            history.unshift(formData);
+            localStorage.setItem('qaHistory', JSON.stringify(history.slice(0, 500))); // Keep last 500
+            
+            alert('✅ Test request SUBMITTED SUCCESSFULLY!\n\nCheck Track tab to update status.');
+            this.reset();
+            document.getElementById('deviceGroup').style.display = 'none';
+            document.getElementById('priority').value = '';
+        });
+
+        // Load complete history
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('qaHistory') || '[]');
+            const historyDiv = document.getElementById('history');
+            
+            if(history.length === 0) {
+                historyDiv.innerHTML = '<div style="text-align:center;padding:60px;color:#6c757d;"><h3>No test requests yet</h3><p>Ask Developers/Designers to submit requests!</p></div>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <tr>
+                        <th>ID</th><th>Project</th><th>Dev</th><th>Scope</th>
+                        <th>Browsers</th><th>Env</th><th>Priority</th>
+                        <th>Status</th><th>Actions</th>
+                    </tr>`;
+            
+            history.slice(0, 50).forEach(item => { // Show latest 50
+                const scope = `${item.regression}${item.browserstack ? ' +BS' : ''}`;
+                html += `
+                    <tr>
+                        <td>${new Date(item.id).toLocaleString()}</td>
+                        <td><strong>${item.project}</strong></td>
+                        <td>${item.dev}</td>
+                        <td>${scope}</td>
+                        <td>${item.browsers.join(', ')}</td>
+                        <td>${item.environments.join(', ')}</td>
+                        <td><span style="color:${item.priority==='urgent'?'#e74c3c':item.priority==='high'?'#f39c12':'#27ae60'}">${item.priority.toUpperCase()}</span></td>
+                        <td>
+                            <select class="status-select status-${item.status}" onchange="updateStatus(${item.id}, this.value)">
+                                <option value="pending" ${item.status==='pending'?'selected':''}>⏳ Pending</option>
+                                <option value="in-progress" ${item.status==='in-progress'?'selected':''}>⚡ In Progress</option>
+                                <option value="completed" ${item.status==='completed'?'selected':''}>✅ Completed</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="viewDetails(${item.id})" style="background:#007bff;">Details</button>
+                        </td>
+                    </tr>`;
+            });
+            html += '</table>';
+            historyDiv.innerHTML = html;
+        }
+
+        function updateStatus(id, status) {
+            let history = JSON.parse(localStorage.getItem('qaHistory') || '[]');
+            const item = history.find(h => h.id == id);
+            if(item) {
+                item.status = status;
+                localStorage.setItem('qaHistory', JSON.stringify(history));
+                loadHistory();
+            }
+        }
+
+        function viewDetails(id) {
+            let history = JSON.parse(localStorage.getItem('qaHistory') || '[]');
+            const item = history.find(h => h.id == id);
+            if(item) {
+                alert(`
+🚀 FULL TEST REQUEST DETAILS:
+
+📋 Project: ${item.project}
+👨‍💻 Dev/Designer: ${item.dev}
+🔍 Scope: ${item.newFeature?',New':''}${item.bugFix?',BugFix':''}${item.smoke?',Smoke':''}, Regression: ${item.regression}
+💻 BrowserStack: ${item.browserstack ? `${item.iosDevices}iOS, ${item.ipadDevices}iPad, ${item.androidDevices}Android${item.macos?', macOS':''}` : 'No'}
+📂 Impacted Modules: ${item.impactedModules || 'None'}
+🌐 URLs: ${item.testUrls || 'Not specified'}
+🖥️ Browsers: ${item.browsers.join(', ')}
+🏢 Environment: ${item.environments.join(', ')}
+📝 Special Instructions: ${item.specialInstructions}
+⭐ Priority: ${item.priority.toUpperCase()}
+📅 Deadline: ${item.deadline || 'None'}
+                `);
+            }
+        }
+    </script>
+</body>
+</html>
