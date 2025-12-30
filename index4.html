@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional QA Intake Portal</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #1e293b; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* Role Switcher */
+        .role-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .role-toggle { display: flex; gap: 10px; align-items: center; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 5px; margin-bottom: 0px; }
+        .tab { padding: 12px 25px; cursor: pointer; background: #e2e8f0; border-radius: 10px 10px 0 0; font-weight: 600; border: none; transition: 0.2s; }
+        .tab.active { background: white; color: var(--primary); border-bottom: 3px solid var(--primary); }
+
+        .content-box { background: white; padding: 30px; border-radius: 0 10px 10px 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 40px; }
+        
+        /* Form Styling */
+        .form-section { border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: #fafafa; }
+        .section-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        
+        .checkbox-flex { display: flex; flex-wrap: wrap; gap: 15px; background: white; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .check-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; }
+        
+        button.primary-btn { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        button.primary-btn:hover { background: #1d4ed8; }
+
+        /* Dashboard Table */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8fafc; text-align: left; padding: 15px; border-bottom: 2px solid #e2e8f0; color: var(--secondary); font-size: 0.8rem; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; vertical-align: middle; }
+        
+        .status-pill { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid transparent; }
+        .pending { background: #fef3c7; color: #92400e; }
+        .progress { background: #dbeafe; color: #1e40af; }
+        .completed { background: #dcfce7; color: #166534; }
+
+        .dev-actions { display: flex; gap: 5px; }
+        .btn-icon { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.8rem; color: white; }
+        .edit-btn { background: var(--secondary); }
+        .del-btn { background: var(--danger); }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="role-header">
+        <h2>🚀 QA Project Control</h2>
+        <div class="role-toggle">
+            <label>Current Role:</label>
+            <select id="roleSelect" onchange="toggleRole()">
+                <option value="dev">Developer Mode (Submit & Edit)</option>
+                <option value="qa">QA Mode (Status Updates Only)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" id="tab-submit" onclick="showTab('submit')">New Test Request</button>
+        <button class="tab" id="tab-track" onclick="showTab('track')">Tracking Board</button>
+    </div>
+
+    <div class="content-box">
+        <div id="section-submit">
+            <div class="form-group" style="max-width: 400px;">
+                <label>Select Request Type:</label>
+                <select id="formType" onchange="updateFormLayout()">
+                    <option value="full">Full Feature / Page Request</option>
+                    <option value="single">Single Bug / Hotfix Request</option>
+                </select>
+            </div>
+
+            <form id="qaForm">
+                <input type="hidden" id="editId" value="">
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Project / Feature Name *</label>
+                        <input type="text" id="project" required placeholder="e.g., Summer Sale Banner">
+                    </div>
+                    <div class="form-group">
+                        <label>Developer/Designer Name *</label>
+                        <input type="text" id="devName" required>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-title">Testing Scope Confirmation</span>
+                    <div class="checkbox-flex">
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="New Feature"> New Feature</label>
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Bug Fix"> Bug Fix</label>
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Sanity"> Sanity</label>
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Smoke"> Smoke</label>
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Responsive"> Responsive</label>
+                    </div>
+
+                    <div id="full-only-fields">
+                        <label style="margin-top:15px;">Regression Testing Required?</label>
+                        <div class="checkbox-flex">
+                            <label class="check-item"><input type="radio" name="regression" value="Full Regression"> Full Regression</label>
+                            <label class="check-item"><input type="radio" name="regression" value="Partial Regression"> Partial Regression</label>
+                            <label class="check-item"><input type="radio" name="regression" value="None" checked> None</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section" id="bs-section">
+                    <span class="section-title">BrowserStack / Devices Needed</span>
+                    <div class="grid">
+                        <div class="form-group"><label>iOS Devices</label><input type="number" id="bs_ios" placeholder="0"></div>
+                        <div class="form-group"><label>Android</label><input type="number" id="bs_android" placeholder="0"></div>
+                        <div class="form-group"><label>iPad</label><input type="number" id="bs_ipad" placeholder="0"></div>
+                        <div class="form-group">
+                            <label>macOS Required?</label>
+                            <select id="bs_macos"><option value="No">No</option><option value="Yes">Yes</option></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Environment</label>
+                        <div class="checkbox-flex">
+                            <label class="check-item"><input type="checkbox" class="env-check" value="Dev"> Dev</label>
+                            <label class="check-item"><input type="checkbox" class="env-check" value="QA"> QA</label>
+                            <label class="check-item"><input type="checkbox" class="env-check" value="Staging"> Staging</label>
+                            <label class="check-item"><input type="checkbox" class="env-check" value="Prod"> Prod</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Browsers</label>
+                        <div class="checkbox-flex">
+                            <label class="check-item"><input type="checkbox" class="br-check" value="Chrome"> Chrome</label>
+                            <label class="check-item"><input type="checkbox" class="br-check" value="Safari"> Safari</label>
+                            <label class="check-item"><input type="checkbox" class="br-check" value="Firefox"> Firefox</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Impacted Modules / Instructions</label>
+                    <textarea id="impact" placeholder="List modules that might be affected by these changes..."></textarea>
+                </div>
+
+                <button type="submit" class="primary-btn" id="submitBtn">🚀 Submit Test Request</button>
+            </form>
+        </div>
+
+        <div id="section-track" class="hidden">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID / Date</th>
+                            <th>Project/Dev</th>
+                            <th>Scope & Regression</th>
+                            <th>Devices</th>
+                            <th>Status</th>
+                            <th class="dev-only-cell">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentRole = 'dev';
+
+    function toggleRole() {
+        currentRole = document.getElementById('roleSelect').value;
+        const devOnlyCells = document.querySelectorAll('.dev-only-cell');
+        const submitTab = document.getElementById('tab-submit');
+        
+        if(currentRole === 'qa') {
+            submitTab.classList.add('hidden');
+            showTab('track');
+        } else {
+            submitTab.classList.remove('hidden');
+        }
+        renderTable();
+    }
+
+    function showTab(tab) {
+        document.getElementById('section-submit').classList.toggle('hidden', tab !== 'submit');
+        document.getElementById('section-track').classList.toggle('hidden', tab !== 'track');
+        document.getElementById('tab-submit').classList.toggle('active', tab === 'submit');
+        document.getElementById('tab-track').classList.toggle('active', tab === 'track');
+        if(tab === 'track') renderTable();
+    }
+
+    function updateFormLayout() {
+        const type = document.getElementById('formType').value;
+        document.getElementById('full-only-fields').classList.toggle('hidden', type === 'single');
+        document.getElementById('bs-section').classList.toggle('hidden', type === 'single');
+    }
+
+    // Save Data
+    document.getElementById('qaForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const tasks = JSON.parse(localStorage.getItem('qa_portal_data') || '[]');
+        const editId = document.getElementById('editId').value;
+
+        const formData = {
+            id: editId || Date.now(),
+            date: new Date().toLocaleDateString(),
+            project: document.getElementById('project').value,
+            dev: document.getElementById('devName').value,
+            type: document.getElementById('formType').value,
+            scopes: Array.from(document.querySelectorAll('.scope-check:checked')).map(c => c.value),
+            regression: document.querySelector('input[name="regression"]:checked').value,
+            bs: `iOS: ${document.getElementById('bs_ios').value || 0}, And: ${document.getElementById('bs_android').value || 0}, Mac: ${document.getElementById('bs_macos').value}`,
+            envs: Array.from(document.querySelectorAll('.env-check:checked')).map(c => c.value),
+            browsers: Array.from(document.querySelectorAll('.br-check:checked')).map(c => c.value),
+            impact: document.getElementById('impact').value,
+            status: 'pending'
+        };
+
+        if(editId) {
+            const index = tasks.findIndex(t => t.id == editId);
+            tasks[index] = formData;
+            alert('Request Updated!');
+        } else {
+            tasks.unshift(formData);
+            alert('Request Submitted!');
+        }
+
+        localStorage.setItem('qa_portal_data', JSON.stringify(tasks));
+        this.reset();
+        document.getElementById('editId').value = '';
+        document.getElementById('submitBtn').innerText = '🚀 Submit Test Request';
+        showTab('track');
+    });
+
+    function renderTable() {
+        const tasks = JSON.parse(localStorage.getItem('qa_portal_data') || '[]');
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        tasks.forEach(task => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><small>${task.id}</small><br>${task.date}</td>
+                <td><strong>${task.project}</strong><br><small>by ${task.dev}</small></td>
+                <td>${task.scopes.join(', ')}<br><small style="color:var(--danger)">${task.regression}</small></td>
+                <td><small>${task.bs}<br>Envs: ${task.envs.join('/')}</small></td>
+                <td>
+                    <select onchange="updateStatus(${task.id}, this.value)" class="status-pill ${task.status}" ${currentRole === 'dev' ? 'disabled' : ''}>
+                        <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="progress" ${task.status === 'progress' ? 'selected' : ''}>Testing</option>
+                        <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Pass ✅</option>
+                    </select>
+                </td>
+                <td class="dev-only-cell ${currentRole === 'qa' ? 'hidden' : ''}">
+                    <div class="dev-actions">
+                        <button class="btn-icon edit-btn" onclick="editTask(${task.id})">Edit</button>
+                        <button class="btn-icon del-btn" onclick="deleteTask(${task.id})">Del</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function updateStatus(id, newStatus) {
+        let tasks = JSON.parse(localStorage.getItem('qa_portal_data'));
+        tasks = tasks.map(t => t.id == id ? {...t, status: newStatus} : t);
+        localStorage.setItem('qa_portal_data', JSON.stringify(tasks));
+        renderTable();
+    }
+
+    function deleteTask(id) {
+        if(!confirm('Delete this request?')) return;
+        let tasks = JSON.parse(localStorage.getItem('qa_portal_data'));
+        tasks = tasks.filter(t => t.id != id);
+        localStorage.setItem('qa_portal_data', JSON.stringify(tasks));
+        renderTable();
+    }
+
+    function editTask(id) {
+        const tasks = JSON.parse(localStorage.getItem('qa_portal_data'));
+        const task = tasks.find(t => t.id == id);
+        
+        document.getElementById('project').value = task.project;
+        document.getElementById('devName').value = task.dev;
+        document.getElementById('impact').value = task.impact;
+        document.getElementById('editId').value = task.id;
+        document.getElementById('submitBtn').innerText = '💾 Update Request';
+        showTab('submit');
+    }
+</script>
+</body>
+</html>
