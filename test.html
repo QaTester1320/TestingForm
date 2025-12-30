@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Master Portal - Secure Intake</title>
+    <style>
+        :root {
+            --primary: #2563eb; --secondary: #64748b; --success: #16a34a;
+            --warning: #f59e0b; --danger: #dc2626; --bg: #f8fafc;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* Login Screen */
+        #login-screen { 
+            height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        }
+        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .login-card h2 { text-align: center; margin-bottom: 20px; color: var(--primary); }
+
+        /* Navigation */
+        nav { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .user-info { font-weight: bold; color: var(--primary); }
+        .logout-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-weight: bold; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 5px; }
+        .tab { padding: 12px 25px; border: none; cursor: pointer; background: #e2e8f0; border-radius: 8px 8px 0 0; font-weight: 600; transition: 0.2s; }
+        .tab.active { background: white; color: var(--primary); border-bottom: 3px solid var(--primary); }
+
+        .content-box { background: white; padding: 30px; border-radius: 0 8px 8px 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        
+        /* Form Elements */
+        .form-section { border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: #fcfcfc; }
+        .section-title { font-weight: bold; color: var(--primary); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 15px; display: block; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.85rem; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px; background: white; border: 1px solid #eee; border-radius: 6px; }
+        .check-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+
+        button.main-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; }
+        
+        /* Dashboard */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th { background: #f1f5f9; text-align: left; padding: 12px; border-bottom: 2px solid #ddd; color: var(--secondary); }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .priority-badge { padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; color: white; }
+        .p-low { background: #94a3b8; } .p-medium { background: #3b82f6; } .p-high { background: #f59e0b; } .p-urgent { background: #ef4444; }
+        
+        .status-select { padding: 4px; border-radius: 4px; font-weight: bold; }
+        .status-pending { background: #fef3c7; } .status-progress { background: #dbeafe; } .status-completed { background: #dcfce7; }
+        
+        .edit-log { font-size: 0.75rem; color: #94a3b8; font-style: italic; margin-top: 5px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-card">
+        <h2>QA Intake Login</h2>
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Email</label>
+            <input type="text" id="loginEmail" placeholder="e.g. qa@test.com">
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Password</label>
+            <input type="password" id="loginPass" placeholder="123">
+        </div>
+        <button class="main-btn" onclick="handleLogin()">Sign In</button>
+        <p style="font-size: 0.75rem; color: #666; margin-top: 15px; text-align: center;">
+            QA: qa@test.com | Dev: dev@test.com | Design: design@test.com <br>Pass: 123
+        </p>
+    </div>
+</div>
+
+<div id="main-portal" class="container hidden">
+    <nav>
+        <div class="user-info">Welcome, <span id="displayUser">User</span> (<span id="displayRole">Role</span>)</div>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </nav>
+
+    <div class="tabs">
+        <button class="tab active" id="tab-btn-submit" onclick="showTab('submit')">Submit Request</button>
+        <button class="tab" onclick="showTab('track')">Tracking Board</button>
+    </div>
+
+    <div class="content-box">
+        <div id="view-submit">
+            <div class="form-group" style="max-width: 300px; margin-bottom: 20px;">
+                <label>Form Type</label>
+                <select id="formType" onchange="toggleFormLayout()">
+                    <option value="full">Full Feature Request</option>
+                    <option value="single">Single Issue / Hotfix</option>
+                </select>
+            </div>
+
+            <form id="qaForm">
+                <input type="hidden" id="editId">
+                <div class="grid">
+                    <div>
+                        <label>Project/Feature Name *</label>
+                        <input type="text" id="project" required>
+                    </div>
+                    <div>
+                        <label>Team/Project Leader</label>
+                        <input type="text" id="leader" placeholder="Enter Lead Name">
+                    </div>
+                    <div>
+                        <label>Priority *</label>
+                        <select id="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High 🔥</option>
+                            <option value="urgent">Urgent 🚨</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Deadline</label>
+                        <input type="datetime-local" id="deadline">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-title">URLs (Optional)</span>
+                    <div class="grid">
+                        <input type="text" id="url_staging" placeholder="Staging URL">
+                        <input type="text" id="url_live" placeholder="Live URL">
+                        <input type="text" id="url_ref" placeholder="Reference URL / Figma">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-title">Testing Parameters</span>
+                    <div class="checkbox-group">
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Functionality"> Functionality</label>
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Responsive"> Responsive</label>
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Sanity"> Sanity</label>
+                        <label class="check-item"><input type="checkbox" class="scope-check" value="Smoke"> Smoke</label>
+                    </div>
+
+                    <div id="full-feature-extras" style="margin-top:15px;">
+                        <label>Regression Required?</label>
+                        <div class="checkbox-group">
+                            <label class="check-item"><input type="radio" name="regression" value="Full"> Full</label>
+                            <label class="check-item"><input type="radio" name="regression" value="Partial"> Partial</label>
+                            <label class="check-item"><input type="radio" name="regression" value="None" checked> None</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Impacted Modules / Description</label>
+                    <textarea id="description" placeholder="Describe the change and what might break..."></textarea>
+                </div>
+
+                <button type="submit" class="main-btn" id="submitBtn">📤 Submit Request to QA</button>
+            </form>
+        </div>
+
+        <div id="view-track" class="hidden">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Priority & Deadline</th>
+                            <th>Project & Lead</th>
+                            <th>Links</th>
+                            <th>Status</th>
+                            <th>History</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const users = {
+        "qa@test.com": { pass: "123", name: "Tester One", role: "qa" },
+        "dev@test.com": { pass: "123", name: "Dev Senior", role: "dev" },
+        "design@test.com": { pass: "123", name: "Visual Lead", role: "design" }
+    };
+
+    let currentUser = JSON.parse(localStorage.getItem('qa_session')) || null;
+
+    // --- AUTH LOGIC ---
+    function handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPass').value;
+        if (users[email] && users[email].pass === pass) {
+            currentUser = { email, ...users[email] };
+            localStorage.setItem('qa_session', JSON.stringify(currentUser));
+            initPortal();
+        } else {
+            alert("Invalid Login Credentials!");
+        }
+    }
+
+    function handleLogout() {
+        localStorage.removeItem('qa_session');
+        location.reload();
+    }
+
+    function initPortal() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-portal').classList.remove('hidden');
+        document.getElementById('displayUser').innerText = currentUser.name;
+        document.getElementById('displayRole').innerText = currentUser.role.toUpperCase();
+        
+        // Hide form for QA, they only track
+        if(currentUser.role === 'qa') {
+            document.getElementById('tab-btn-submit').classList.add('hidden');
+            showTab('track');
+        } else {
+            document.getElementById('tab-btn-submit').classList.remove('hidden');
+            showTab('submit');
+        }
+    }
+
+    if (currentUser) initPortal();
+
+    // --- NAVIGATION ---
+    function showTab(tab) {
+        document.getElementById('view-submit').classList.toggle('hidden', tab !== 'submit');
+        document.getElementById('view-track').classList.toggle('hidden', tab !== 'track');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        if(tab === 'track') renderTable();
+    }
+
+    function toggleFormLayout() {
+        const type = document.getElementById('formType').value;
+        document.getElementById('full-feature-extras').classList.toggle('hidden', type === 'single');
+    }
+
+    // --- DATA HANDLING ---
+    document.getElementById('qaForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = JSON.parse(localStorage.getItem('qa_data_logs') || '[]');
+        const editId = document.getElementById('editId').value;
+        const now = new Date().toLocaleString();
+
+        const entry = {
+            id: editId || Date.now(),
+            createdBy: currentUser.email,
+            ownerName: currentUser.name,
+            project: document.getElementById('project').value,
+            leader: document.getElementById('leader').value,
+            priority: document.getElementById('priority').value,
+            deadline: document.getElementById('deadline').value,
+            urls: {
+                staging: document.getElementById('url_staging').value,
+                live: document.getElementById('url_live').value,
+                ref: document.getElementById('url_ref').value
+            },
+            scopes: Array.from(document.querySelectorAll('.scope-check:checked')).map(c => c.value),
+            regression: document.querySelector('input[name="regression"]:checked').value,
+            desc: document.getElementById('description').value,
+            status: 'pending',
+            createdDate: editId ? data.find(x => x.id == editId).createdDate : now,
+            lastEdited: editId ? now : null
+        };
+
+        if(editId) {
+            const index = data.findIndex(x => x.id == editId);
+            data[index] = entry;
+        } else {
+            data.unshift(entry);
+        }
+
+        localStorage.setItem('qa_data_logs', JSON.stringify(data));
+        alert(editId ? "Changes Saved!" : "Request Sent!");
+        this.reset();
+        document.getElementById('editId').value = '';
+        document.getElementById('submitBtn').innerText = "📤 Submit Request to QA";
+        showTab('track');
+    });
+
+    function renderTable() {
+        const data = JSON.parse(localStorage.getItem('qa_data_logs') || '[]');
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        // Privacy Logic: Devs only see their own. QA sees ALL.
+        const filteredData = currentUser.role === 'qa' 
+            ? data 
+            : data.filter(item => item.createdBy === currentUser.email);
+
+        filteredData.forEach(item => {
+            const dl = item.deadline ? new Date(item.deadline).toLocaleString() : 'No Deadline';
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <span class="priority-badge p-${item.priority}">${item.priority.toUpperCase()}</span>
+                    <div style="margin-top:5px; font-size:0.7rem;"><b>Due:</b> ${dl}</div>
+                </td>
+                <td>
+                    <strong>${item.project}</strong><br>
+                    <small>By: ${item.ownerName} | Lead: ${item.leader}</small>
+                </td>
+                <td>
+                    <div style="display:flex; gap:5px;">
+                        ${item.urls.staging ? `<a href="${item.urls.staging}" target="_blank">STG</a>` : ''}
+                        ${item.urls.live ? `<a href="${item.urls.live}" target="_blank">LIVE</a>` : ''}
+                        ${item.urls.ref ? `<a href="${item.urls.ref}" target="_blank">REF</a>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <select class="status-select status-${item.status}" onchange="updateStatus(${item.id}, this.value)" ${currentUser.role !== 'qa' ? 'disabled' : ''}>
+                        <option value="pending" ${item.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="progress" ${item.status === 'progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>Completed</option>
+                    </select>
+                </td>
+                <td>
+                    <small>Created: ${item.createdDate}</small>
+                    ${item.lastEdited ? `<div class="edit-log">Last Edited: ${item.lastEdited}</div>` : ''}
+                </td>
+                <td>
+                    ${currentUser.role !== 'qa' ? `
+                        <button onclick="editItem(${item.id})" style="color:var(--primary); background:none; border:none; cursor:pointer;">Edit</button> | 
+                        <button onclick="deleteItem(${item.id})" style="color:var(--danger); background:none; border:none; cursor:pointer;">Del</button>
+                    ` : '<small>Read Only</small>'}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function updateStatus(id, val) {
+        const data = JSON.parse(localStorage.getItem('qa_data_logs'));
+        const index = data.findIndex(x => x.id == id);
+        data[index].status = val;
+        localStorage.setItem('qa_data_logs', JSON.stringify(data));
+        renderTable();
+    }
+
+    function deleteItem(id) {
+        if(!confirm("Delete this request?")) return;
+        let data = JSON.parse(localStorage.getItem('qa_data_logs'));
+        data = data.filter(x => x.id != id);
+        localStorage.setItem('qa_data_logs', JSON.stringify(data));
+        renderTable();
+    }
+
+    function editItem(id) {
+        const data = JSON.parse(localStorage.getItem('qa_data_logs'));
+        const item = data.find(x => x.id == id);
+        
+        document.getElementById('editId').value = item.id;
+        document.getElementById('project').value = item.project;
+        document.getElementById('leader').value = item.leader;
+        document.getElementById('priority').value = item.priority;
+        document.getElementById('deadline').value = item.deadline;
+        document.getElementById('url_staging').value = item.urls.staging;
+        document.getElementById('url_live').value = item.urls.live;
+        document.getElementById('url_ref').value = item.urls.ref;
+        document.getElementById('description').value = item.desc;
+        
+        document.getElementById('submitBtn').innerText = "💾 Save Changes & Re-Submit";
+        showTab('submit');
+    }
+</script>
+</body>
+</html>
