@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise QA Intake Portal</title>
+    <style>
+        :root { --primary: #2563eb; --secondary: #64748b; --danger: #dc2626; --bg: #f8fafc; --border: #cbd5e1; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: #1e293b; padding: 15px; }
+        
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        /* LOGIN */
+        #login-page { position: fixed; inset: 0; background: white; display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .login-card { width: 100%; max-width: 400px; }
+        .login-card h1 { font-size: 24px; text-align: center; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; }
+        .login-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; outline: none; }
+        .btn-signin { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        /* HEADER & TABS */
+        header { background: white; padding: 15px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .nav-tabs { display: flex; background: #f1f5f9; padding: 6px; gap: 6px; overflow-x: auto; }
+        .tab-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; font-weight: bold; border-radius: 8px; color: var(--secondary); white-space: nowrap; transition: 0.2s; }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .content { padding: 25px; }
+        .section { border: 1px solid #e2e8f0; padding: 20px; border-radius: 10px; margin-bottom: 20px; background: #fff; }
+        .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 15px; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; }
+
+        /* RESPONSIVE GRIDS */
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        @media (max-width: 992px) { .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .grid-3, .grid-4 { grid-template-columns: 1fr; } header { text-align: center; justify-content: center; } }
+
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: #fff; }
+        
+        .note-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px; font-size: 13px; color: #92400e; line-height: 1.5; }
+        .hidden { display: none !important; }
+
+        .check-group { display: flex; flex-wrap: wrap; gap: 15px; padding: 10px 0; }
+        .check-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
+        
+        /* READ ONLY MODE */
+        .view-only-mode input, .view-only-mode select, .view-only-mode textarea { 
+            background: #f1f5f9 !important; border-color: #e2e8f0 !important; cursor: not-allowed; color: #64748b;
+        }
+
+        /* TRACKING TABLE */
+        .table-wrap { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { text-align: left; padding: 15px; background: #f8fafc; border-bottom: 2px solid #edf2f7; font-size: 12px; color: var(--secondary); text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .action-btn { background: none; border: none; cursor: pointer; font-weight: bold; margin-right: 15px; text-decoration: underline; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div id="login-page">
+    <div class="login-card">
+        <h1>QA Portal Access</h1>
+        <div class="input-group"><label>Email</label><input type="text" id="logEmail" class="login-input" placeholder="qa@test.com"></div>
+        <div class="input-group"><label>Password</label><input type="password" id="logPass" class="login-input" value="123"></div>
+        <button class="btn-signin" onclick="handleLogin()">Sign In</button>
+        <div style="text-align: center; font-size: 12px; margin-top: 15px; color: var(--secondary);">QA: qa@test.com | Dev: dev@test.com | Pass: 123</div>
+    </div>
+</div>
+
+<div class="container hidden" id="app">
+    <header>
+        <div><strong>QA Intake</strong> | <span id="userRole" style="color:var(--primary)"></span></div>
+        <button onclick="handleLogout()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold;">Sign Out</button>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" id="tab-form-nav" onclick="setTab('form')">New Request</button>
+        <button class="tab-btn" id="tab-track-nav" onclick="setTab('track')">Tracking Board</button>
+    </div>
+
+    <div class="content">
+        <div id="view-form">
+            <div class="note-box">
+                <strong>Note : </strong> Smoke testing covers the entire system or application, whereas sanity testing is focused on specific functionality or components.<br>
+                Smoke testing is done to assure that the acute functionalities of program is working fine. Sanity testing is done to check the bugs have been fixed after the build.
+            </div>
+
+            <form id="mainQaForm">
+                <input type="hidden" id="editId">
+                <div class="grid-3">
+                    <div><label>Developer/Designer Name *</label><input type="text" id="inp_dev" required></div>
+                    <div><label>Team Leader Name *</label><input type="text" id="inp_tl" required></div>
+                    <div><label>Project Name *</label><input type="text" id="inp_proj" required></div>
+                </div>
+                <div class="grid-3">
+                    <div><label>Priority</label><select id="inp_prio"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+                    <div><label>Hours Required (Approx)</label><select id="inp_hrs"><option value="1">1 Hour</option><option value="4">4 Hours</option><option value="8">8 Hours</option><option value="24">24 Hours</option></select></div>
+                </div>
+
+                <div class="section">
+                    <span class="section-title">Testing Type *</span>
+                    <div class="check-group">
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Functional"> Functional</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Responsive"> Responsive</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Cross Browser"> Cross Browser</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Performance"> Performance</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Accessibility"> Accessibility</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Smoke"> Smoke</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Sanity"> Sanity</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Full Deep Testing"> Full Deep Testing</label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <span class="section-title">ENVIRONMENT & URLs</span>
+                    <div class="check-group">
+                        <label class="check-item"><input type="checkbox" class="env-type" value="Dev"> Dev</label>
+                        <label class="check-item"><input type="checkbox" class="env-type" value="QA"> QA</label>
+                        <label class="check-item"><input type="checkbox" class="env-type" value="Staging"> Staging</label>
+                        <label class="check-item"><input type="checkbox" class="env-type" value="Prod"> Prod</label>
+                    </div>
+                    <div class="grid-3" style="margin-top:15px;">
+                        <input type="text" id="url_stg" placeholder="Staging URL">
+                        <input type="text" id="url_live" placeholder="Live URL">
+                        <input type="text" id="url_fig" placeholder="Reference (Figma/Doc)">
+                    </div>
+                    <div class="grid-2" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <input type="url" id="url_wtd" placeholder="WTD project task URL">
+                        <input type="url" id="url_ref" placeholder="Reference URL of this task">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <span class="section-title">Browsers Needed</span>
+                    <div class="check-group">
+                        <label class="check-item"><input type="checkbox" class="b-type" value="Chrome"> Chrome</label>
+                        <label class="check-item"><input type="checkbox" class="b-type" value="Safari"> Safari</label>
+                        <label class="check-item"><input type="checkbox" class="b-type" value="Opera"> Opera</label>
+                        <label class="check-item"><input type="checkbox" class="b-type" value="Edge"> Edge</label>
+                        <label class="check-item"><input type="checkbox" class="b-type" value="Firefox"> Firefox</label>
+                        <label class="check-item"><input type="checkbox" class="b-type" value="Samsung Galaxy"> Samsung Galaxy</label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <span class="section-title">Regression Type</span>
+                    <div class="check-group" onchange="toggleReg()">
+                        <label class="check-item"><input type="radio" name="regT" value="Full"> Full</label>
+                        <label class="check-item"><input type="radio" name="regT" value="Partial"> Partial</label>
+                        <label class="check-item"><input type="radio" name="regT" value="None" checked> No regression required</label>
+                    </div>
+                    <div id="regBox" class="hidden" style="margin-top:10px;">
+                        <label>Impacted modules / Instructions</label>
+                        <textarea id="inp_impact" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <span class="section-title">BrowserStack required?</span>
+                    <select id="bs_needed" onchange="toggleBS()" style="max-width: 200px; margin-bottom: 15px;">
+                        <option value="No">No</option><option value="Yes">Yes</option>
+                    </select>
+                    <div id="bsGrid" class="hidden">
+                        <div class="grid-4">
+                            <div><label>iOS Qty</label><input type="number" id="bs_ios" value="0"></div>
+                            <div><label>Android Qty</label><input type="number" id="bs_and" value="0"></div>
+                            <div><label>iPad Qty</label><input type="number" id="bs_ipad" value="0"></div>
+                            <div><label>macOS Required?</label><select id="bs_mac"><option>No</option><option>Yes</option></select></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;"><label>Test Scenarios *</label><textarea id="inp_scen" rows="3" required></textarea></div>
+                <div style="margin-bottom: 30px;"><label>Other field for other info</label><textarea id="inp_other" rows="2"></textarea></div>
+
+                <div id="btn-group">
+                    <button type="submit" id="submit-btn" class="btn-signin">📤 Submit Request to QA</button>
+                    <button type="button" id="close-btn" class="btn-signin hidden" style="background:var(--secondary)" onclick="setTab('track')">Close View Mode</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="view-track" class="hidden">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Project/Dev</th><th>Priority</th><th>QA Status</th><th>Created</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="trackBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let session = JSON.parse(localStorage.getItem('qa_v4_auth')) || null;
+    const users = { "qa@test.com": "qa", "dev@test.com": "dev" };
+
+    function handleLogin() {
+        const e = document.getElementById('logEmail').value;
+        if(users[e]) {
+            session = { email: e, role: users[e] };
+            localStorage.setItem('qa_v4_auth', JSON.stringify(session));
+            location.reload();
+        } else alert("Invalid Login");
+    }
+    function handleLogout() { localStorage.removeItem('qa_v4_auth'); location.reload(); }
+
+    function init() {
+        if(!session) return;
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('userRole').innerText = session.role.toUpperCase();
+        if(session.role === 'qa') { document.getElementById('tab-form-nav').classList.add('hidden'); setTab('track'); }
+        else setTab('form');
+    }
+
+    function setTab(t) {
+        document.getElementById('view-form').classList.toggle('hidden', t !== 'form');
+        document.getElementById('view-track').classList.toggle('hidden', t !== 'track');
+        if(t === 'track') render();
+        else resetForm();
+    }
+
+    function toggleBS() { document.getElementById('bsGrid').classList.toggle('hidden', document.getElementById('bs_needed').value === 'No'); }
+    function toggleReg() { 
+        const val = document.querySelector('input[name="regT"]:checked').value;
+        document.getElementById('regBox').classList.toggle('hidden', val === 'None'); 
+    }
+
+    function resetForm() {
+        const f = document.getElementById('mainQaForm');
+        f.reset();
+        f.classList.remove('view-only-mode');
+        f.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+        document.getElementById('editId').value = '';
+        document.getElementById('submit-btn').classList.remove('hidden');
+        document.getElementById('submit-btn').innerText = "📤 Submit Request to QA";
+        document.getElementById('close-btn').classList.add('hidden');
+        toggleBS(); toggleReg();
+    }
+
+    document.getElementById('mainQaForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const db = JSON.parse(localStorage.getItem('qa_v4_db') || '[]');
+        const editId = document.getElementById('editId').value;
+        
+        const item = {
+            id: editId || Date.now(),
+            uid: session.email,
+            dev: document.getElementById('inp_dev').value,
+            tl: document.getElementById('inp_tl').value,
+            proj: document.getElementById('inp_proj').value,
+            prio: document.getElementById('inp_prio').value,
+            status: 'pending',
+            created: editId ? db.find(x => x.id == editId).created : new Date().toLocaleString(),
+            data: {
+                types: Array.from(document.querySelectorAll('.t-type:checked')).map(c => c.value),
+                envs: Array.from(document.querySelectorAll('.env-type:checked')).map(c => c.value),
+                browsers: Array.from(document.querySelectorAll('.b-type:checked')).map(c => c.value),
+                urls: [document.getElementById('url_stg').value, document.getElementById('url_live').value, document.getElementById('url_fig').value, document.getElementById('url_wtd').value, document.getElementById('url_ref').value],
+                reg: document.querySelector('input[name="regT"]:checked').value,
+                impact: document.getElementById('inp_impact').value,
+                bs: [document.getElementById('bs_needed').value, document.getElementById('bs_ios').value, document.getElementById('bs_and').value, document.getElementById('bs_ipad').value, document.getElementById('bs_mac').value],
+                scen: document.getElementById('inp_scen').value,
+                other: document.getElementById('inp_other').value,
+                hrs: document.getElementById('inp_hrs').value
+            }
+        };
+
+        if(editId) db[db.findIndex(x => x.id == editId)] = item;
+        else db.unshift(item);
+
+        localStorage.setItem('qa_v4_db', JSON.stringify(db));
+        alert("✅ Success: Email notification simulation sent to QA Team!");
+        setTab('track');
+    });
+
+    function render() {
+        const db = JSON.parse(localStorage.getItem('qa_v4_db') || '[]');
+        const body = document.getElementById('trackBody');
+        body.innerHTML = '';
+        const list = session.role === 'qa' ? db : db.filter(x => x.uid === session.email);
+
+        list.forEach(it => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${it.proj}</strong><br><small>${it.dev} (TL: ${it.tl})</small></td>
+                <td>${it.prio}</td>
+                <td>
+                    <select onchange="updStat(${it.id}, this.value)" ${session.role !== 'qa' ? 'disabled' : ''}>
+                        <option value="pending" ${it.status==='pending'?'selected':''}>Pending</option>
+                        <option value="verified" ${it.status==='verified'?'selected':''}>Verified ✅</option>
+                    </select>
+                </td>
+                <td><small>${it.created}</small></td>
+                <td>
+                    <button class="action-btn" style="color:blue" onclick="openF(${it.id}, 'view')">View</button>
+                    ${session.role !== 'qa' ? `
+                        <button class="action-btn" style="color:green" onclick="openF(${it.id}, 'edit')">Edit</button>
+                        <button class="action-btn" style="color:red" onclick="delReq(${it.id})">Del</button>
+                    ` : ''}
+                </td>
+            `;
+            body.appendChild(tr);
+        });
+    }
+
+    function openF(id, mode) {
+        const it = JSON.parse(localStorage.getItem('qa_v4_db')).find(x => x.id == id);
+        document.getElementById('editId').value = mode === 'view' ? '' : it.id;
+        document.getElementById('inp_dev').value = it.dev;
+        document.getElementById('inp_tl').value = it.tl;
+        document.getElementById('inp_proj').value = it.proj;
+        document.getElementById('inp_prio').value = it.prio;
+        document.getElementById('url_stg').value = it.data.urls[0];
+        document.getElementById('url_live').value = it.data.urls[1];
+        document.getElementById('url_fig').value = it.data.urls[2];
+        document.getElementById('url_wtd').value = it.data.urls[3];
+        document.getElementById('url_ref').value = it.data.urls[4];
+        document.getElementById('inp_impact').value = it.data.impact;
+        document.getElementById('inp_scen').value = it.data.scen;
+        document.getElementById('inp_other').value = it.data.other;
+        document.getElementById('inp_hrs').value = it.data.hrs;
+        document.getElementById('bs_needed').value = it.data.bs[0];
+        document.getElementById('bs_ios').value = it.data.bs[1];
+        document.getElementById('bs_and').value = it.data.bs[2];
+        document.getElementById('bs_ipad').value = it.data.bs[3];
+        document.getElementById('bs_mac').value = it.data.bs[4];
+
+        document.querySelectorAll('.t-type').forEach(c => c.checked = it.data.types.includes(c.value));
+        document.querySelectorAll('.env-type').forEach(c => c.checked = it.data.envs.includes(c.value));
+        document.querySelectorAll('.b-type').forEach(c => c.checked = it.data.browsers.includes(c.value));
+        document.querySelector(`input[name="regT"][value="${it.data.reg}"]`).checked = true;
+
+        toggleBS(); toggleReg();
+        const f = document.getElementById('mainQaForm');
+        if(mode === 'view') {
+            f.classList.add('view-only-mode');
+            f.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+            document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('close-btn').classList.remove('hidden');
+        } else {
+            f.classList.remove('view-only-mode');
+            f.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+            document.getElementById('submit-btn').classList.remove('hidden');
+            document.getElementById('submit-btn').innerText = "💾 Save & Update Changes";
+            document.getElementById('close-btn').classList.add('hidden');
+        }
+        document.getElementById('view-form').classList.remove('hidden');
+        document.getElementById('view-track').classList.add('hidden');
+    }
+
+    function updStat(id, s) {
+        const db = JSON.parse(localStorage.getItem('qa_v4_db'));
+        db.find(x => x.id == id).status = s;
+        localStorage.setItem('qa_v4_db', JSON.stringify(db));
+    }
+
+    function delReq(id) {
+        if(!confirm("Delete this?")) return;
+        let db = JSON.parse(localStorage.getItem('qa_v4_db'));
+        db = db.filter(x => x.id != id);
+        localStorage.setItem('qa_v4_db', JSON.stringify(db));
+        render();
+    }
+    init();
+</script>
+</body>
+</html>
