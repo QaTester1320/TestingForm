@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA & Dev Portal - Complete Edition</title>
+    <style>
+        :root { --primary: #2563eb; --secondary: #64748b; --danger: #dc2626; --bg: #f8fafc; --border: #cbd5e1; --success: #16a34a; --warning: #f59e0b; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: #1e293b; padding: 10px; }
+        .container { max-width: 1250px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        /* LOGIN */
+        #login-page { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+        .login-card { width: 100%; max-width: 400px; padding: 30px; border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 6px; }
+
+        /* HEADER & TABS */
+        header { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .nav-tabs { display: flex; background: #f1f5f9; padding: 6px; gap: 6px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; }
+        .tab-btn { padding: 10px 18px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-radius: 8px; color: var(--secondary); white-space: nowrap; }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .content-area { padding: 20px; }
+
+        /* DASHBOARD STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; text-align: center; }
+        .stat-card h3 { font-size: 11px; text-transform: uppercase; color: var(--secondary); margin-bottom: 5px; }
+        .stat-card p { font-size: 24px; font-weight: 800; }
+        .stat-total { border-top: 4px solid var(--secondary); }
+        .stat-pending { border-top: 4px solid var(--warning); color: var(--warning); }
+        .stat-progress { border-top: 4px solid var(--primary); color: var(--primary); }
+        .stat-verified { border-top: 4px solid var(--success); color: var(--success); }
+
+        .form-section { border: 1px solid #e2e8f0; padding: 20px; border-radius: 10px; margin-bottom: 20px; background: #fff; }
+        .section-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 15px; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 11px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+        
+        .url-input-wrap { display: flex; gap: 5px; }
+        .copy-small-btn { padding: 0 10px; background: #f1f5f9; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+
+        .selector-box { background: #eff6ff; padding: 15px; border-radius: 10px; border: 1px solid #bfdbfe; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+
+        .check-grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 5px 0; }
+        .check-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
+
+        .view-mode-lock { pointer-events: none; }
+        .view-mode-lock input, .view-mode-lock select, .view-mode-lock textarea { background: #f1f5f9 !important; border-color: #cbd5e1 !important; color: #64748b !important; }
+        .view-mode-lock .copy-small-btn, .view-mode-lock #closeBtn { pointer-events: auto; }
+
+        .table-wrap { width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { text-align: left; padding: 14px; background: #f8fafc; border-bottom: 2px solid #edf2f7; font-size: 11px; color: var(--secondary); text-transform: uppercase; }
+        td { padding: 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        .btn-link { background: none; border: none; cursor: pointer; font-weight: bold; margin-right: 12px; text-decoration: underline; font-size: 12px; }
+        
+        .filter-bar { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+
+<div id="login-page">
+    <div class="login-card">
+        <h2>Portal Access</h2>
+        <input type="text" id="email" placeholder="Email (qa@test.com / dev@test.com)">
+        <input type="password" id="pass" value="123">
+        <button onclick="login()" style="width:100%; padding:14px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Login</button>
+    </div>
+</div>
+
+<div class="container hidden" id="app">
+    <header>
+        <div><strong>Project Portal</strong> | <span id="userRole" style="color:var(--primary)"></span></div>
+        <button onclick="logout()" style="color:var(--danger); border:none; background:none; font-weight:bold; cursor:pointer;">Logout</button>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" id="tab-form" onclick="switchTab('form')">New Submission</button>
+        <button class="tab-btn" id="tab-track" onclick="switchTab('track')">Tracking Board</button>
+    </div>
+
+    <div id="view-form" class="content-area">
+        <div class="selector-box" id="selector-container">
+            <label>Select Form Action Type:</label>
+            <select id="formMode" onchange="applyLayout()">
+                <option value="intake">Submit New Request (Full Form)</option>
+                <option value="bug">Check Only One Issue/Bug</option>
+                <option value="status">Project Update Status Form</option>
+            </select>
+        </div>
+
+        <form id="masterForm">
+            <input type="hidden" id="editId">
+            <input type="hidden" id="activeType" value="intake">
+
+            <div class="grid">
+                <div><label>Project Name *</label><input type="text" id="p_name" required></div>
+                <div><label>Developer/Designer Name *</label><input type="text" id="d_name" required></div>
+                <div id="tl_box"><label>Team Leader Name *</label><input type="text" id="tl_name"></div>
+            </div>
+
+            <div id="testingArea">
+                <div class="grid">
+                    <div><label>Priority</label><select id="prio"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+                    <div><label>Estimate Hours</label>
+                        <select id="hrs">
+                            <option value="1">1 Hour</option><option value="2">2 Hour</option><option value="4">4 Hours</option>
+                            <option value="6">6 Hour</option><option value="8">8 Hours</option><option value="10">10 Hour</option>
+                            <option value="11">More than 10</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">Testing Types Required *</span>
+                    <div class="check-grid">
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Functional"> Functional</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Responsive"> Responsive</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Cross Browser"> Cross Browser</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Performance"> Performance</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Accessibility"> Accessibility</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Smoke"> Smoke</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Sanity"> Sanity</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Full Deep Testing"> Full Deep Testing</label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">Environment & URLs</span>
+                    <div class="check-grid" style="margin-bottom:15px">
+                        <label class="check-item"><input type="checkbox" class="env" value="Dev"> Dev</label>
+                        <label class="check-item"><input type="checkbox" class="env" value="QA"> QA</label>
+                        <label class="check-item"><input type="checkbox" class="env" value="Staging"> Staging</label>
+                        <label class="check-item"><input type="checkbox" class="env" value="Prod"> Prod</label>
+                    </div>
+                    <div class="grid">
+                        <div class="url-input-wrap"><input type="text" id="u_stg" placeholder="Staging URL"><button type="button" class="copy-small-btn" onclick="copyValue('u_stg')">📋</button></div>
+                        <div class="url-input-wrap"><input type="text" id="u_live" placeholder="Live URL"><button type="button" class="copy-small-btn" onclick="copyValue('u_live')">📋</button></div>
+                        <div class="url-input-wrap"><input type="text" id="u_fig" placeholder="Figma/Ref"><button type="button" class="copy-small-btn" onclick="copyValue('u_fig')">📋</button></div>
+                    </div>
+                    <div class="grid" style="margin-top:10px">
+                        <div class="url-input-wrap" style="grid-column: span 2;"><input type="text" id="u_wtd" placeholder="WTD Project URL"><button type="button" class="copy-small-btn" onclick="copyValue('u_wtd')">📋</button></div>
+                        <div class="url-input-wrap"><input type="text" id="u_ref_task" placeholder="Ref Task URL"><button type="button" class="copy-small-btn" onclick="copyValue('u_ref_task')">📋</button></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">Browsers & Regression</span>
+                    <div class="check-grid">
+                        <label class="check-item"><input type="checkbox" class="browser" value="Chrome"> Chrome</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Safari"> Safari</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Edge"> Edge</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Firefox"> Firefox</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Opera"> Opera</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Samsung"> Samsung</label>
+                    </div>
+                    <div class="grid" style="margin-top:15px">
+                        <div><label>macOS Required/Check?</label><select id="mac_req"><option>No</option><option>Yes - High Priority</option><option>Yes - Standard</option></select></div>
+                        <div><label>Regression Type</label>
+                            <div class="check-grid">
+                                <label class="check-item"><input type="radio" name="reg" value="None" checked> None</label>
+                                <label class="check-item"><input type="radio" name="reg" value="Partial"> Partial</label>
+                                <label class="check-item"><input type="radio" name="reg" value="Full"> Full</label>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="reg_impact" placeholder="Regression Impact Details..." rows="2" style="margin-top:10px"></textarea>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">BrowserStack Devices</span>
+                    <div><label>BrowserStack Needed?</label>
+                        <select id="bs_needed" onchange="toggleBS()">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                    <div id="bs_fields" class="hidden" style="margin-top:15px">
+                        <div class="grid">
+                            <div><label>iOS Qty</label><input type="number" id="bs_ios" value="0"></div>
+                            <div><label>Android Mobile Qty</label><input type="number" id="bs_and" value="0"></div>
+                            <div><label>iPad Qty</label><input type="number" id="bs_ipad" value="0"></div>
+                            <div><label>Android Tablet Qty</label><input type="number" id="bs_and_tab" value="0"></div>
+                            <div><label>macOS Qty</label><input type="number" id="bs_mac" value="0"></div>
+                        </div>
+                    </div>
+                </div>
+                <label>Test Scenarios / Instructions *</label>
+                <textarea id="scenarios" rows="4" required style="margin-bottom:15px"></textarea>
+            </div>
+
+            <div id="statusArea" class="hidden">
+                <div class="grid">
+                    <div class="url-input-wrap"><div><label>WTD Project URL</label><input type="url" id="st_w_proj"></div><button type="button" class="copy-small-btn" style="align-self:flex-end; margin-bottom:11px;" onclick="copyValue('st_w_proj')">📋</button></div>
+                    <div class="url-input-wrap"><div><label>WTD Task URL</label><input type="url" id="st_w_task"></div><button type="button" class="copy-small-btn" style="align-self:flex-end; margin-bottom:11px;" onclick="copyValue('st_w_task')">📋</button></div>
+                    <div><label>Comment No.</label><input type="text" id="st_comm"></div>
+                </div>
+                <div class="grid">
+                    <div><label>Ref Names</label><input type="text" id="st_refs"></div>
+                    <div><label>Modules Completed</label><select id="st_mods"><option value="1">1 Module</option><option value="5">5</option><option value="10">10 (Full)</option><option value="11">More than 10</option></select></div>
+                    <div class="url-input-wrap"><div><label>Attachment Link</label><input type="text" id="st_attach"></div><button type="button" class="copy-small-btn" style="align-self:flex-end; margin-bottom:11px;" onclick="copyValue('st_attach')">📋</button></div>
+                </div>
+                <div><label>Description Box</label><textarea id="st_desc" rows="3"></textarea></div>
+                <div class="grid" style="margin-top:15px">
+                    <div><label>Discuss Sync?</label><select id="st_disc"><option>No</option><option>Yes - Sync Needed</option></select></div>
+                    <div style="grid-column: span 2;"><label>Other Info</label><input type="text" id="st_other"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:10px">
+                <label>Global Other Info</label>
+                <textarea id="global_other" placeholder="Additional information..." rows="2"></textarea>
+            </div>
+
+            <div style="margin-top:25px; display:flex; gap:15px;">
+                <button type="submit" id="submitBtn" style="padding:14px 35px; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Submit Record</button>
+                <button type="button" id="closeBtn" class="hidden" onclick="switchTab('track')" style="padding:14px 35px; background:var(--secondary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Close View</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="view-track" class="content-area hidden">
+        <div class="stats-grid">
+            <div class="stat-card stat-total"><h3>Total</h3><p id="count-total">0</p></div>
+            <div class="stat-card stat-pending"><h3>Pending</h3><p id="count-pending">0</p></div>
+            <div class="stat-card stat-progress"><h3>In Progress</h3><p id="count-progress">0</p></div>
+            <div class="stat-card stat-verified"><h3>Verified ✅</h3><p id="count-verified">0</p></div>
+        </div>
+
+        <div class="filter-bar">
+            <div><label>Filter by Specific Date:</label><input type="date" id="filterDate" onchange="renderTable()"></div>
+            <button onclick="clearDateFilter()" style="padding:8px 15px; background:#e2e8f0; border:none; border-radius:6px; cursor:pointer; font-size:12px;">Clear Date</button>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Type</th><th>Project & Dev</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="trackBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let user = JSON.parse(localStorage.getItem('qa_portal_v20_user')) || null;
+    const DB_KEY = 'qa_portal_v20_db';
+
+    function login() {
+        const e = document.getElementById('email').value.toLowerCase();
+        if(e.includes('qa')) user = { email: e, role: 'qa' };
+        else if(e.includes('dev')) user = { email: e, role: 'dev' };
+        if(user) { localStorage.setItem('qa_portal_v20_user', JSON.stringify(user)); location.reload(); }
+        else alert("Please enter a valid role email (qa@ or dev@)");
+    }
+    function logout() { localStorage.removeItem('qa_portal_v20_user'); location.reload(); }
+
+    function init() {
+        if(!user) return;
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('userRole').innerText = user.role.toUpperCase();
+        if(user.role === 'qa') { document.getElementById('tab-form').classList.add('hidden'); switchTab('track'); }
+        else switchTab('form');
+    }
+
+    function toggleBS() {
+        const val = document.getElementById('bs_needed').value;
+        document.getElementById('bs_fields').classList.toggle('hidden', val !== 'Yes');
+    }
+
+    function applyLayout() {
+        const type = document.getElementById('formMode').value;
+        document.getElementById('activeType').value = type;
+        const isStatus = type === 'status';
+        document.getElementById('statusArea').classList.toggle('hidden', !isStatus);
+        document.getElementById('testingArea').classList.toggle('hidden', isStatus);
+        document.getElementById('tl_box').classList.toggle('hidden', isStatus);
+        toggleBS();
+    }
+
+    function switchTab(t) {
+        document.getElementById('view-form').classList.toggle('hidden', t !== 'form');
+        document.getElementById('view-track').classList.toggle('hidden', t !== 'track');
+        if(t === 'track') renderTable(); else resetForm();
+    }
+
+    function resetForm() {
+        const f = document.getElementById('masterForm'); f.reset();
+        f.classList.remove('view-mode-lock');
+        f.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+        document.getElementById('editId').value = '';
+        document.getElementById('submitBtn').innerText = "Submit Record";
+        document.getElementById('submitBtn').classList.remove('hidden');
+        document.getElementById('closeBtn').classList.add('hidden');
+        document.getElementById('selector-container').classList.remove('hidden');
+        applyLayout();
+    }
+
+    function clearDateFilter() { document.getElementById('filterDate').value = ''; renderTable(); }
+
+    document.getElementById('masterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+        const editId = document.getElementById('editId').value;
+        const now = new Date();
+        
+        const entry = {
+            id: editId || Date.now(),
+            owner: user.email,
+            type: document.getElementById('activeType').value,
+            pName: document.getElementById('p_name').value,
+            dName: document.getElementById('d_name').value,
+            status: editId ? db.find(x => x.id == editId).status : 'pending',
+            created: editId ? db.find(x => x.id == editId).created : now.toISOString(),
+            data: {
+                tl: document.getElementById('tl_name').value, prio: document.getElementById('prio').value, 
+                hrs: document.getElementById('hrs').value,
+                tTypes: Array.from(document.querySelectorAll('.t-type:checked')).map(c => c.value),
+                envs: Array.from(document.querySelectorAll('.env:checked')).map(c => c.value),
+                browsers: Array.from(document.querySelectorAll('.browser:checked')).map(c => c.value),
+                urls: [document.getElementById('u_stg').value, document.getElementById('u_live').value, document.getElementById('u_fig').value, document.getElementById('u_wtd').value, document.getElementById('u_ref_task').value],
+                reg: document.querySelector('input[name="reg"]:checked').value, impact: document.getElementById('reg_impact').value,
+                bs_need: document.getElementById('bs_needed').value,
+                bs_vals: [document.getElementById('bs_ios').value, document.getElementById('bs_and').value, document.getElementById('bs_ipad').value, document.getElementById('bs_and_tab').value, document.getElementById('bs_mac').value],
+                mac: document.getElementById('mac_req').value, scen: document.getElementById('scenarios').value,
+                s_wp: document.getElementById('st_w_proj').value, s_wt: document.getElementById('st_w_task').value, 
+                s_cm: document.getElementById('st_comm').value, s_rf: document.getElementById('st_refs').value, 
+                s_md: document.getElementById('st_mods').value, s_at: document.getElementById('st_attach').value,
+                s_ds: document.getElementById('st_desc').value, s_di: document.getElementById('st_disc').value, 
+                s_ot: document.getElementById('st_other').value, g_ot: document.getElementById('global_other').value
+            }
+        };
+
+        if(editId) { const idx = db.findIndex(x => x.id == editId); db[idx] = entry; }
+        else db.unshift(entry);
+
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        alert("Success!"); switchTab('track');
+    });
+
+    function renderTable() {
+        const db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+        const body = document.getElementById('trackBody');
+        const selDate = document.getElementById('filterDate').value;
+        body.innerHTML = '';
+        
+        let filtered = user.role === 'qa' ? db : db.filter(x => x.owner === user.email);
+
+        if(selDate) {
+            filtered = filtered.filter(item => {
+                const itemDate = new Date(item.created).toISOString().split('T')[0];
+                return itemDate === selDate;
+            });
+        }
+
+        document.getElementById('count-total').innerText = filtered.length;
+        document.getElementById('count-pending').innerText = filtered.filter(x => x.status === 'pending').length;
+        document.getElementById('count-progress').innerText = filtered.filter(x => x.status === 'inProgress').length;
+        document.getElementById('count-verified').innerText = filtered.filter(x => x.status === 'verified').length;
+
+        filtered.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.type.toUpperCase()}</strong></td>
+                <td>${item.pName}<br><small>${item.dName}</small></td>
+                <td>
+                    <select onchange="updateStat(${item.id}, this.value)" ${user.role !== 'qa' ? 'disabled' : ''}>
+                        <option value="pending" ${item.status==='pending'?'selected':''}>Pending</option>
+                        <option value="inProgress" ${item.status==='inProgress'?'selected':''}>InProgress</option>
+                        <option value="verified" ${item.status==='verified'?'selected':''}>Verified ✅</option>
+                    </select>
+                </td>
+                <td><small>${new Date(item.created).toLocaleString()}</small></td>
+                <td>
+                    <button class="btn-link" style="color:blue" onclick="openRec(${item.id}, 'view')">View</button>
+                    ${user.role === 'dev' ? `
+                        <button class="btn-link" style="color:green" onclick="openRec(${item.id}, 'edit')">Edit</button>
+                        <button class="btn-link" style="color:red" onclick="delRec(${item.id})">Delete</button>
+                    ` : ''}
+                </td>`;
+            body.appendChild(tr);
+        });
+    }
+
+    function openRec(id, mode) {
+        const item = JSON.parse(localStorage.getItem(DB_KEY)).find(x => x.id == id);
+        document.getElementById('editId').value = mode === 'view' ? '' : item.id;
+        document.getElementById('formMode').value = item.type;
+        applyLayout();
+
+        document.getElementById('p_name').value = item.pName; document.getElementById('d_name').value = item.dName;
+        document.getElementById('tl_name').value = item.data.tl; document.getElementById('prio').value = item.data.prio;
+        document.getElementById('hrs').value = item.data.hrs;
+        document.querySelectorAll('.t-type').forEach(c => c.checked = item.data.tTypes.includes(c.value));
+        document.querySelectorAll('.env').forEach(c => c.checked = item.data.envs.includes(c.value));
+        document.querySelectorAll('.browser').forEach(c => c.checked = item.data.browsers.includes(c.value));
+        document.getElementById('u_stg').value = item.data.urls[0]; document.getElementById('u_live').value = item.data.urls[1];
+        document.getElementById('u_fig').value = item.data.urls[2]; document.getElementById('u_wtd').value = item.data.urls[3];
+        document.getElementById('u_ref_task').value = item.data.urls[4];
+        document.querySelector(`input[name="reg"][value="${item.data.reg}"]`).checked = true;
+        document.getElementById('reg_impact').value = item.data.impact;
+        document.getElementById('bs_needed').value = item.data.bs_need || 'No'; toggleBS();
+        document.getElementById('bs_ios').value = item.data.bs_vals[0]; document.getElementById('bs_and').value = item.data.bs_vals[1];
+        document.getElementById('bs_ipad').value = item.data.bs_vals[2]; document.getElementById('bs_and_tab').value = item.data.bs_vals[3];
+        document.getElementById('bs_mac').value = item.data.bs_vals[4] || 0;
+        document.getElementById('mac_req').value = item.data.mac; document.getElementById('scenarios').value = item.data.scen;
+        document.getElementById('st_w_proj').value = item.data.s_wp; document.getElementById('st_w_task').value = item.data.s_wt;
+        document.getElementById('st_comm').value = item.data.s_cm; document.getElementById('st_refs').value = item.data.s_rf;
+        document.getElementById('st_mods').value = item.data.s_md; document.getElementById('st_attach').value = item.data.s_at;
+        document.getElementById('st_desc').value = item.data.s_ds; document.getElementById('st_disc').value = item.data.s_di;
+        document.getElementById('st_other').value = item.data.s_ot; document.getElementById('global_other').value = item.data.g_ot;
+
+        const f = document.getElementById('masterForm');
+        document.getElementById('selector-container').classList.add('hidden');
+        if(mode === 'view') {
+            f.classList.add('view-mode-lock');
+            f.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+            document.getElementById('submitBtn').classList.add('hidden');
+            document.getElementById('closeBtn').classList.remove('hidden');
+        } else {
+            f.classList.remove('view-mode-lock');
+            f.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+            document.getElementById('submitBtn').classList.remove('hidden');
+            document.getElementById('submitBtn').innerText = "💾 Update Record";
+            document.getElementById('closeBtn').classList.add('hidden');
+        }
+        document.getElementById('view-form').classList.remove('hidden');
+        document.getElementById('view-track').classList.add('hidden');
+    }
+
+    function updateStat(id, v) { 
+        const db = JSON.parse(localStorage.getItem(DB_KEY)); 
+        db.find(x => x.id == id).status = v;
+        localStorage.setItem(DB_KEY, JSON.stringify(db)); renderTable(); 
+    }
+    function delRec(id) { if(confirm("Delete this?")) { let db = JSON.parse(localStorage.getItem(DB_KEY)); db = db.filter(x => x.id != id); localStorage.setItem(DB_KEY, JSON.stringify(db)); renderTable(); } }
+    function copyValue(id) { const v = document.getElementById(id).value; if(v) { navigator.clipboard.writeText(v); alert("Copied!"); } }
+
+    init();
+</script>
+</body>
+</html>
