@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Master Portal - Final Functional Version</title>
+    <style>
+        :root { --primary: #2563eb; --secondary: #64748b; --danger: #dc2626; --bg: #f8fafc; --border: #cbd5e1; --success: #16a34a; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        body { background: var(--bg); color: #1e293b; padding: 10px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        .hidden { display: none !important; }
+        /* This was causing the issue - now we use no-lock to bypass it */
+        .view-lock { pointer-events: none; opacity: 0.8; }
+        .no-lock { pointer-events: auto !important; opacity: 1 !important; cursor: pointer !important; }
+
+        #login-page { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-card { width: 400px; padding: 30px; border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 6px; }
+
+        header { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        .nav-tabs { display: flex; background: #f1f5f9; padding: 6px; gap: 6px; border-bottom: 1px solid #e2e8f0; }
+        .tab-btn { padding: 10px 18px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-radius: 8px; color: var(--secondary); }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .content-area { padding: 20px; }
+        .form-section { border: 1px solid #e2e8f0; padding: 20px; border-radius: 10px; margin-bottom: 20px; background: #fff; }
+        .section-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 15px; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+        
+        .check-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+        .check-item { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+
+        .filter-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px; align-items: flex-end; }
+
+        .table-wrap { width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1300px; }
+        th { text-align: left; padding: 12px; background: #f8fafc; font-size: 11px; color: var(--secondary); text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-export { background: #16a34a; color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-link { background: none; text-decoration: underline; font-size: 12px; margin-right: 8px; cursor: pointer; border: none; }
+    </style>
+</head>
+<body>
+
+<div id="login-page">
+    <div class="login-card">
+        <h2>System Access</h2>
+        <input type="text" id="email" placeholder="Email (qa@... or dev@...)">
+        <input type="password" id="pass" value="123">
+        <button onclick="login()" class="btn btn-primary" style="width:100%">Login</button>
+    </div>
+</div>
+
+<div class="container hidden" id="app">
+    <header>
+        <div><strong>QA Portal v5.0</strong> | <span id="userRole" style="color:var(--primary)"></span></div>
+        <button onclick="logout()" style="color:var(--danger); border:none; background:none; font-weight:bold; cursor:pointer;">Logout</button>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" id="tab-form-btn" onclick="switchTab('form')">Submission Form</button>
+        <button class="tab-btn" id="tab-track-btn" onclick="switchTab('track')">Tracking Dashboard</button>
+    </div>
+
+    <div id="view-form" class="content-area">
+        <div id="selector-box" class="form-section" style="background:#eff6ff">
+            <label>Select Form Mode:</label>
+            <select id="formMode" onchange="applyLayout()">
+                <option value="intake">New Testing Request (Full)</option>
+                <option value="bug">Single Bug / Issue</option>
+                <option value="status">Project Update Status Form</option>
+            </select>
+        </div>
+
+        <form id="masterForm">
+            <input type="hidden" id="editId">
+            
+            <div class="grid">
+                <div><label>Project Name *</label><input type="text" id="p_name" required></div>
+                <div><label>Developer Name *</label><input type="text" id="d_name" required></div>
+                <div id="tl_box"><label>Team Leader Name *</label><input type="text" id="tl_name"></div>
+            </div>
+
+            <div id="testingArea">
+                <div class="grid">
+                    <div><label>Priority</label><select id="prio"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+                    <div><label>Est. Hours</label>
+                        <select id="hrs">
+                            <option value="1">1 Hour</option><option value="4">4 Hours</option><option value="8">8 Hours</option><option value="12">12+ Hours</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">Testing Types</span>
+                    <div class="check-grid">
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Functional"> Functional</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Responsive"> Responsive</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Cross Browser"> Cross Browser</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Sanity"> Sanity</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Smoke"> Smoke</label>
+                        <label class="check-item"><input type="checkbox" class="t-type" value="Full Deep"> Full Deep</label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">Environment & URLs</span>
+                    <div class="check-grid" style="margin-bottom:15px">
+                        <label class="check-item"><input type="checkbox" class="env" value="Dev"> Dev</label>
+                        <label class="check-item"><input type="checkbox" class="env" value="QA"> QA</label>
+                        <label class="check-item"><input type="checkbox" class="env" value="Staging"> Staging</label>
+                        <label class="check-item"><input type="checkbox" class="env" value="Prod"> Prod</label>
+                    </div>
+                    <div class="grid">
+                        <input type="text" id="u_stg" placeholder="Staging URL">
+                        <input type="text" id="u_live" placeholder="Live URL">
+                        <input type="text" id="u_fig" placeholder="Figma/Design URL">
+                    </div>
+                    <div class="grid">
+                        <input type="text" id="u_wtd" placeholder="WTD Project URL">
+                        <input type="text" id="u_ref_task" placeholder="Ref Task URL">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">Browsers & Regression</span>
+                    <div class="check-grid">
+                        <label class="check-item"><input type="checkbox" class="browser" value="Chrome"> Chrome</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Safari"> Safari</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Edge"> Edge</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Firefox"> Firefox</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Opera"> Opera</label>
+                        <label class="check-item"><input type="checkbox" class="browser" value="Samsung"> Samsung</label>
+                    </div>
+                    <div class="grid" style="margin-top:15px">
+                        <div><label>macOS Required?</label><select id="mac_req"><option>No</option><option>Yes</option></select></div>
+                        <div><label>Regression Type</label><select id="reg_type"><option>None</option><option>Partial</option><option>Full</option></select></div>
+                    </div>
+                    <textarea id="reg_impact" placeholder="Regression Impact Areas..." rows="2"></textarea>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-label">BrowserStack Requirements</span>
+                    <div class="grid">
+                        <div><label>iOS Qty</label><input type="number" id="bs_ios" value="0"></div>
+                        <div><label>Android Qty</label><input type="number" id="bs_and" value="0"></div>
+                        <div><label>iPad Qty</label><input type="number" id="bs_ipad" value="0"></div>
+                        <div><label>Android Tab Qty</label><input type="number" id="bs_and_tab" value="0"></div>
+                        <div><label>macOS Qty</label><input type="number" id="bs_mac" value="0"></div>
+                    </div>
+                </div>
+                <label>Test Scenarios *</label>
+                <textarea id="scenarios" rows="4"></textarea>
+            </div>
+
+            <div id="statusArea" class="hidden">
+                <span class="section-label">Project Status Update</span>
+                <div class="grid">
+                    <input type="text" id="st_w_proj" placeholder="WTD Project URL">
+                    <input type="text" id="st_w_task" placeholder="WTD Task URL">
+                    <input type="text" id="st_comm" placeholder="Comment No.">
+                </div>
+                <div class="grid">
+                    <input type="text" id="st_refs" placeholder="Ref Names">
+                    <div>
+                        <label>Modules Completed</label>
+                        <select id="st_mods">
+                            <option value="1">1 Module</option><option value="5">5 Modules</option><option value="10">10 (Full)</option><option value="11">11+ Modules</option>
+                        </select>
+                    </div>
+                    <input type="text" id="st_attach" placeholder="Attachment Link" style="align-self: flex-end;">
+                </div>
+                <textarea id="st_desc" placeholder="Current Status Description..." rows="3"></textarea>
+                <div class="grid" style="margin-top:15px">
+                    <div><label>Discuss Sync?</label><select id="st_sync"><option>No</option><option>Yes - Sync Needed</option></select></div>
+                    <div style="grid-column: span 2;"><label>Other Status Info</label><input type="text" id="st_other"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:15px">
+                <label>Global / Permanent Notes</label>
+                <textarea id="global_other" rows="2"></textarea>
+            </div>
+
+            <div style="margin-top:25px; display:flex; gap:10px;">
+                <button type="submit" id="submitBtn" class="btn btn-primary no-lock">Submit Record</button>
+                <button type="button" id="closeBtn" class="btn btn-secondary no-lock" onclick="switchTab('track')">Back to List</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="view-track" class="content-area hidden">
+        <div class="filter-bar">
+            <div><label>Search</label><input type="text" id="searchFilter" oninput="renderTable()" placeholder="Project/Dev name..."></div>
+            <div><label>Priority</label>
+                <select id="prioFilter" onchange="renderTable()">
+                    <option value="All">All</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Urgent">Urgent</option>
+                </select>
+            </div>
+            <div><label>Date</label><input type="date" id="dateFilter" onchange="renderTable()"></div>
+            <div style="display:flex; gap:5px">
+                <button onclick="clearFilters()" class="btn btn-secondary">Reset</button>
+                <button onclick="exportCSV()" class="btn btn-export">CSV Export</button>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Project & Dev</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>C/M Dates</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="trackBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let user = JSON.parse(localStorage.getItem('qa_v25_user')) || null;
+    const DB_KEY = 'qa_v25_db';
+
+    function login() {
+        const e = document.getElementById('email').value.toLowerCase();
+        if(e.includes('qa')) user = { email: e, role: 'qa' };
+        else if(e.includes('dev')) user = { email: e, role: 'dev' };
+        if(user) { localStorage.setItem('qa_v25_user', JSON.stringify(user)); location.reload(); }
+        else alert("Log in as qa@ or dev@ email");
+    }
+    function logout() { localStorage.removeItem('qa_v25_user'); location.reload(); }
+
+    function init() {
+        if(!user) return;
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('userRole').innerText = user.role.toUpperCase();
+        if(user.role === 'qa') switchTab('track'); else switchTab('form');
+    }
+
+    function applyLayout() {
+        const m = document.getElementById('formMode').value;
+        document.getElementById('testingArea').classList.toggle('hidden', m === 'status');
+        document.getElementById('statusArea').classList.toggle('hidden', m !== 'status');
+        document.getElementById('tl_box').classList.toggle('hidden', m === 'status');
+    }
+
+    function switchTab(t) {
+        if(t === 'track') {
+            document.getElementById('view-form').classList.add('hidden');
+            document.getElementById('view-track').classList.remove('hidden');
+            document.getElementById('tab-form-btn').classList.remove('active');
+            document.getElementById('tab-track-btn').classList.add('active');
+            renderTable();
+        } else {
+            document.getElementById('view-form').classList.remove('hidden');
+            document.getElementById('view-track').classList.add('hidden');
+            document.getElementById('tab-form-btn').classList.add('active');
+            document.getElementById('tab-track-btn').classList.remove('active');
+            resetForm();
+        }
+    }
+
+    function resetForm() {
+        const f = document.getElementById('masterForm');
+        f.reset();
+        f.classList.remove('view-lock'); // Important: Unlock everything
+        f.querySelectorAll('input, select, textarea').forEach(i => i.disabled = false);
+        document.getElementById('editId').value = '';
+        document.getElementById('submitBtn').classList.remove('hidden');
+        document.getElementById('submitBtn').innerText = "Submit Record";
+        document.getElementById('selector-box').classList.remove('hidden');
+        applyLayout();
+    }
+
+    document.getElementById('masterForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+        const editId = document.getElementById('editId').value;
+        const now = new Date().toLocaleString();
+
+        const record = {
+            id: editId || Date.now(),
+            owner: user.email,
+            type: document.getElementById('formMode').value,
+            pName: document.getElementById('p_name').value,
+            dName: document.getElementById('d_name').value,
+            prio: document.getElementById('prio').value,
+            status: editId ? db.find(x => x.id == editId).status : 'pending',
+            created: editId ? db.find(x => x.id == editId).created : now,
+            lastMod: now,
+            data: {
+                tl: document.getElementById('tl_name').value,
+                hrs: document.getElementById('hrs').value,
+                tTypes: Array.from(document.querySelectorAll('.t-type:checked')).map(c => c.value),
+                envs: Array.from(document.querySelectorAll('.env:checked')).map(c => c.value),
+                urls: [document.getElementById('u_stg').value, document.getElementById('u_live').value, document.getElementById('u_fig').value, document.getElementById('u_wtd').value, document.getElementById('u_ref_task').value],
+                browsers: Array.from(document.querySelectorAll('.browser:checked')).map(c => c.value),
+                mac: document.getElementById('mac_req').value,
+                regT: document.getElementById('reg_type').value,
+                regI: document.getElementById('reg_impact').value,
+                bs: [document.getElementById('bs_ios').value, document.getElementById('bs_and').value, document.getElementById('bs_ipad').value, document.getElementById('bs_and_tab').value, document.getElementById('bs_mac').value],
+                scen: document.getElementById('scenarios').value,
+                s_wp: document.getElementById('st_w_proj').value, s_wt: document.getElementById('st_w_task').value,
+                s_cm: document.getElementById('st_comm').value, s_rf: document.getElementById('st_refs').value,
+                s_md: document.getElementById('st_mods').value, s_at: document.getElementById('st_attach').value,
+                s_ds: document.getElementById('st_desc').value, s_sy: document.getElementById('st_sync').value,
+                s_ot: document.getElementById('st_other').value, g_ot: document.getElementById('global_other').value
+            }
+        };
+
+        if(editId) { const idx = db.findIndex(x => x.id == editId); db[idx] = record; }
+        else db.unshift(record);
+
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        alert("Saved Successfully!"); switchTab('track');
+    });
+
+    function renderTable() {
+        const db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+        const body = document.getElementById('trackBody');
+        const sTxt = document.getElementById('searchFilter').value.toLowerCase();
+        const sPrio = document.getElementById('prioFilter').value;
+        const sDate = document.getElementById('dateFilter').value;
+        body.innerHTML = '';
+
+        let filtered = user.role === 'qa' ? db : db.filter(x => x.owner === user.email);
+        if(sTxt) filtered = filtered.filter(x => x.pName.toLowerCase().includes(sTxt) || x.dName.toLowerCase().includes(sTxt));
+        if(sPrio !== 'All') filtered = filtered.filter(x => x.prio === sPrio);
+        if(sDate) filtered = filtered.filter(x => x.created.includes(sDate));
+
+        filtered.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${item.type.toUpperCase()}</b></td>
+                <td>${item.pName}<br><small>${item.dName}</small></td>
+                <td><span style="color:${item.prio==='Urgent'?'red':(item.prio==='High'?'orange':'inherit')}">${item.prio}</span></td>
+                <td>
+                    <select onchange="updateStat(${item.id}, this.value)" ${user.role!=='qa'?'disabled':''}>
+                        <option value="pending" ${item.status==='pending'?'selected':''}>Pending</option>
+                        <option value="verified" ${item.status==='verified'?'selected':''}>Verified ✅</option>
+                    </select>
+                </td>
+                <td><small>C: ${item.created}<br>M: ${item.lastMod}</small></td>
+                <td>
+                    <button class="btn-link" onclick="openRec(${item.id}, 'view')">View</button>
+                    ${user.role==='dev'?`<button class="btn-link" style="color:green" onclick="openRec(${item.id}, 'edit')">Edit</button>
+                    <button class="btn-link" style="color:red" onclick="delRec(${item.id})">Delete</button>`:''}
+                </td>`;
+            body.appendChild(tr);
+        });
+    }
+
+    function openRec(id, mode) {
+        const db = JSON.parse(localStorage.getItem(DB_KEY));
+        const item = db.find(x => x.id == id);
+        
+        document.getElementById('editId').value = mode === 'view' ? '' : item.id;
+        document.getElementById('formMode').value = item.type;
+        applyLayout();
+
+        // Populate all fields
+        document.getElementById('p_name').value = item.pName;
+        document.getElementById('d_name').value = item.dName;
+        document.getElementById('prio').value = item.prio;
+        document.getElementById('tl_name').value = item.data.tl;
+        document.getElementById('hrs').value = item.data.hrs || "1";
+        document.querySelectorAll('.t-type').forEach(c => c.checked = item.data.tTypes.includes(c.value));
+        document.querySelectorAll('.env').forEach(c => c.checked = item.data.envs.includes(c.value));
+        document.querySelectorAll('.browser').forEach(c => c.checked = item.data.browsers.includes(c.value));
+        document.getElementById('u_stg').value = item.data.urls[0];
+        document.getElementById('u_live').value = item.data.urls[1];
+        document.getElementById('u_fig').value = item.data.urls[2];
+        document.getElementById('u_wtd').value = item.data.urls[3];
+        document.getElementById('u_ref_task').value = item.data.urls[4];
+        document.getElementById('reg_type').value = item.data.regT;
+        document.getElementById('reg_impact').value = item.data.regI;
+        document.getElementById('bs_ios').value = item.data.bs[0];
+        document.getElementById('bs_and').value = item.data.bs[1];
+        document.getElementById('bs_ipad').value = item.data.bs[2];
+        document.getElementById('bs_and_tab').value = item.data.bs[3];
+        document.getElementById('bs_mac').value = item.data.bs[4];
+        document.getElementById('scenarios').value = item.data.scen;
+        document.getElementById('st_w_proj').value = item.data.s_wp;
+        document.getElementById('st_w_task').value = item.data.s_wt;
+        document.getElementById('st_comm').value = item.data.s_cm;
+        document.getElementById('st_refs').value = item.data.s_rf;
+        document.getElementById('st_mods').value = item.data.s_md;
+        document.getElementById('st_attach').value = item.data.s_at;
+        document.getElementById('st_desc').value = item.data.s_ds;
+        document.getElementById('st_sync').value = item.data.s_sy;
+        document.getElementById('st_other').value = item.data.s_ot;
+        document.getElementById('global_other').value = item.data.g_ot;
+
+        const f = document.getElementById('masterForm');
+        document.getElementById('selector-box').classList.add('hidden');
+        document.getElementById('view-form').classList.remove('hidden');
+        document.getElementById('view-track').classList.add('hidden');
+
+        if(mode === 'view') {
+            f.classList.add('view-lock');
+            f.querySelectorAll('input, select, textarea').forEach(i => i.disabled = true);
+            document.getElementById('submitBtn').classList.add('hidden');
+        } else {
+            f.classList.remove('view-lock');
+            f.querySelectorAll('input, select, textarea').forEach(i => i.disabled = false);
+            document.getElementById('submitBtn').classList.remove('hidden');
+            document.getElementById('submitBtn').innerText = "Update Existing Record";
+        }
+    }
+
+    function updateStat(id, v) { 
+        const db = JSON.parse(localStorage.getItem(DB_KEY)); 
+        const item = db.find(x => x.id == id);
+        item.status = v; item.lastMod = new Date().toLocaleString();
+        localStorage.setItem(DB_KEY, JSON.stringify(db)); renderTable(); 
+    }
+
+    function delRec(id) { if(confirm("Confirm deletion?")) { let db = JSON.parse(localStorage.getItem(DB_KEY)); db = db.filter(x => x.id != id); localStorage.setItem(DB_KEY, JSON.stringify(db)); renderTable(); } }
+    function clearFilters() { document.getElementById('searchFilter').value = ''; document.getElementById('prioFilter').value = 'All'; document.getElementById('dateFilter').value = ''; renderTable(); }
+
+    function exportCSV() {
+        const db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+        if(!db.length) return alert("Nothing to export");
+        let csv = "Project,Dev,Priority,Status,Created\n";
+        db.forEach(r => { csv += `"${r.pName}","${r.dName}","${r.prio}","${r.status}","${r.created}"\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'QA_Portal_Data.csv'; a.click();
+    }
+
+    init();
+</script>
+</body>
+</html>
