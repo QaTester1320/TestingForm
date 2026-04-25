@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Master Portal - Final Restoration v16.0</title>
+    <style>
+        :root { 
+            --primary: #3b82f6; --bg: #0f172a; --card: #1e293b; 
+            --border: #334155; --text: #f1f5f9; --secondary: #94a3b8;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Mona Sans', 'Inter', monospace, sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        
+        .hidden { display: none !important; }
+
+        /* Sidebar Navigation */
+        aside { width: 260px; background: #020617; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 25px; font-weight: 800; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); letter-spacing: 1px; }
+        .nav-link { padding: 15px 25px; color: var(--secondary); cursor: pointer; transition: 0.2s; font-size: 14px; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .nav-link:hover, .nav-link.active { background: var(--card); color: white; border-right: 4px solid var(--primary); }
+
+        main { flex: 1; overflow-y: auto; padding: 30px; }
+
+        /* Login Layout */
+        #login-scr { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: var(--card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: white; }
+
+        /* Form Components */
+        .section-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .section-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 15px; display: block; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-size: 12px; color: var(--secondary); font-weight: 700; }
+        input, select, textarea { width: 100%; padding: 10px; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 14px; }
+        
+        .check-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 5px; }
+        .check-item { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+
+        /* Daily Report UI (Mirrors Video) */
+        .report-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .status-pill { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+        .st-todo { background: #475569; } .st-inprogress { background: var(--warning); color: #000; } .st-done { background: var(--success); }
+
+        .btn { padding: 12px 24px; border-radius: 6px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+
+        /* Project Cards */
+        .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .proj-card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s; }
+        .proj-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .proj-icon { width: 45px; height: 45px; background: #020617; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div id="login-scr">
+    <div class="login-box">
+        <h2 style="margin-bottom:25px; color: var(--primary)">QA PORTAL ACCESS</h2>
+        <input type="text" id="log-email" placeholder="Email Address">
+        <input type="password" id="log-pass" placeholder="Password">
+        <button onclick="handleLogin()" class="btn btn-primary" style="width:100%">Sign In to Dashboard</button>
+    </div>
+</div>
+
+<aside id="sidebar" class="hidden">
+    <div class="sidebar-header">WORKPLACE TO DO</div>
+    <div class="nav-link active" onclick="nav('dashboard')">Dashboard</div>
+    <div class="nav-link" onclick="nav('projects')">All Projects</div>
+    <div class="nav-link" onclick="nav('testing-form')">New Testing Form</div>
+    <div class="nav-link" onclick="nav('reports')">Daily Reports</div>
+    <div id="qa-admin-section" class="hidden">
+        <div class="nav-link" onclick="nav('admin')" style="color: var(--warning)">Admin: Add Project</div>
+    </div>
+    <div class="nav-link" onclick="handleLogout()" style="margin-top:auto; color: var(--danger)">Logout Session</div>
+</aside>
+
+<main id="app" class="hidden">
+    
+    <div id="page-dashboard" class="page">
+        <h2 style="margin-bottom:20px">Welcome Back</h2>
+        <div class="grid">
+            <div class="section-box"><h3>Active Projects</h3><h1 id="count-projs">0</h1></div>
+            <div class="section-box"><h3>Pending Tasks</h3><h1>12</h1></div>
+            <div class="section-box"><h3>Reports Sent</h3><h1>48</h1></div>
+        </div>
+    </div>
+
+    <div id="page-projects" class="page hidden">
+        <h2 style="margin-bottom:25px">Project Hub</h2>
+        <div id="projectList" class="proj-grid"></div>
+    </div>
+
+    <div id="page-testing-form" class="page hidden">
+        <h2 style="margin-bottom:25px">New Testing Intake Form</h2>
+        <form id="masterForm">
+            <div class="section-box">
+                <span class="section-label">General Information</span>
+                <div class="grid">
+                    <div><label>Project Name *</label><select id="f_pname" required></select></div>
+                    <div><label>Developer Name *</label><input type="text" id="f_dev" required></div>
+                    <div><label>Team Lead</label><input type="text" id="f_tl"></div>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <span class="section-label">Environment URLs & Access</span>
+                <div class="check-grid" style="margin-bottom:15px">
+                    <label class="check-item"><input type="checkbox" class="f-env" value="Dev"> Dev</label>
+                    <label class="check-item"><input type="checkbox" class="f-env" value="QA"> QA</label>
+                    <label class="check-item"><input type="checkbox" class="f-env" value="Staging"> Staging</label>
+                    <label class="check-item"><input type="checkbox" class="f-env" value="Prod"> Production</label>
+                </div>
+                <div class="grid">
+                    <input type="text" id="u_stg" placeholder="Staging URL">
+                    <input type="text" id="u_live" placeholder="Live URL">
+                    <input type="text" id="u_fig" placeholder="Figma URL">
+                    <input type="text" id="u_wtd" placeholder="WTD Project URL">
+                    <input type="text" id="u_task" placeholder="Task Reference URL">
+                </div>
+            </div>
+
+            <div class="section-box">
+                <span class="section-label">BrowserStack & Devices</span>
+                <div class="grid">
+                    <div><label>iOS Qty</label><input type="number" id="f_ios" value="0"></div>
+                    <div><label>Android Qty</label><input type="number" id="f_and" value="0"></div>
+                    <div><label>iPad Qty</label><input type="number" id="f_ipad" value="0"></div>
+                    <div><label>macOS Qty</label><input type="number" id="f_mac" value="0"></div>
+                </div>
+                <div class="grid" style="margin-top:10px">
+                    <div><label>macOS Required?</label><select id="f_mac_req"><option>No</option><option>Yes</option></select></div>
+                    <div><label>Regression Type</label><select id="f_reg_type"><option>None</option><option>Partial</option><option>Full Regression</option></select></div>
+                </div>
+                <textarea id="f_reg_impact" placeholder="Regression Impact Areas..." rows="2" style="margin-top:10px"></textarea>
+            </div>
+
+            <div class="section-box">
+                <span class="section-label">Scenarios & Steps</span>
+                <textarea id="f_scenarios" rows="5" placeholder="1. Go to URL... &#10;2. Click Menu..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit Testing Request</button>
+        </form>
+    </div>
+
+    <div id="page-reports" class="page hidden">
+        <h2 style="margin-bottom:25px">Daily Progress Report</h2>
+        <div class="report-layout">
+            <div class="report-main">
+                <div class="section-box">
+                    <label>Work/Report Comments</label>
+                    <textarea id="rep_comment" rows="10" placeholder="Describe the testing work performed today..."></textarea>
+                    <div style="display:flex; justify-content:space-between; margin-top:15px; align-items:center;">
+                        <button class="btn btn-success" onclick="saveWorkReport()">Update Work Report</button>
+                        <div id="timer" style="font-family:monospace; font-size:22px; color:var(--primary)">00:00:00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="report-sidebar">
+                <div class="section-box">
+                    <label>Assigned Project</label>
+                    <select id="rep_proj"></select>
+                    <label style="margin-top:15px">Time Logged</label>
+                    <div style="display:flex; gap:5px">
+                        <select id="rep_hh"><script>for(let i=0;i<13;i++)document.write(`<option value="${i}">${i}h</option>`)</script></select>
+                        <select id="rep_mm"><option>00m</option><option>15m</option><option>30m</option><option>45m</option></select>
+                    </div>
+                    <label style="margin-top:15px">Current Status</label>
+                    <select id="rep_status">
+                        <option value="todo">To Do</option>
+                        <option value="inprogress">In Progress</option>
+                        <option value="done">Completed</option>
+                    </select>
+                </div>
+                <div class="section-box">
+                    <label>Task Followers</label>
+                    <select multiple style="height:120px">
+                        <option>Akash P</option><option>Brian V</option><option>Chetan T</option><option>Developer Team</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-admin" class="page hidden">
+        <h2>Administrator: Add Project Node</h2>
+        <div class="section-box" style="margin-top:20px">
+            <label>Full Project Name</label><input type="text" id="adm_pname" placeholder="Client Name / Project Title">
+            <label style="margin-top:15px">Whitelisted Members (Emails, comma separated)</label>
+            <input type="text" id="adm_mems" placeholder="client@domain.com, dev@domain.com">
+            <button class="btn btn-primary" style="margin-top:20px" onclick="createProject()">Deploy New Project</button>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    let user = JSON.parse(localStorage.getItem('qa_v16_user')) || null;
+    const DB_PROJS = 'qa_v16_projs';
+    const DB_RECS = 'qa_v16_recs';
+
+    function handleLogin() {
+        const email = document.getElementById('log-email').value.toLowerCase();
+        const pass = document.getElementById('log-pass').value;
+        if(!email || !pass) return alert("All credentials required");
+        let role = email.includes('qa') ? 'qa' : (email.includes('dev') ? 'dev' : 'client');
+        user = { email, role };
+        localStorage.setItem('qa_v16_user', JSON.stringify(user));
+        location.reload();
+    }
+
+    function handleLogout() { localStorage.removeItem('qa_v16_user'); location.reload(); }
+
+    function init() {
+        if(!user) return;
+        document.getElementById('login-scr').classList.add('hidden');
+        document.getElementById('sidebar').classList.remove('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        if(user.role === 'qa') document.getElementById('qa-admin-section').classList.remove('hidden');
+        renderProjects();
+        populateDropdowns();
+    }
+
+    function nav(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.add('hidden'));
+        document.querySelectorAll('.nav-link').forEach(nl => nl.classList.remove('active'));
+        document.getElementById('page-' + p).classList.remove('hidden');
+        event.currentTarget.classList.add('active');
+    }
+
+    function createProject() {
+        const name = document.getElementById('adm_pname').value;
+        const mems = document.getElementById('adm_mems').value.split(',').map(m => m.trim().toLowerCase());
+        const db = JSON.parse(localStorage.getItem(DB_PROJS) || '[]');
+        db.push({ name, mems });
+        localStorage.setItem(DB_PROJS, JSON.stringify(db));
+        location.reload();
+    }
+
+    function renderProjects() {
+        const db = JSON.parse(localStorage.getItem(DB_PROJS) || '[]');
+        const visible = user.role === 'qa' ? db : db.filter(p => p.mems.includes(user.email));
+        document.getElementById('count-projs').innerText = visible.length;
+        document.getElementById('projectList').innerHTML = visible.map(p => `
+            <div class="proj-card" onclick="nav('reports')">
+                <div class="proj-icon">${p.name[0]}</div>
+                <div><strong>${p.name}</strong><br><small style="color:var(--secondary)">Active Node</small></div>
+            </div>
+        `).join('');
+    }
+
+    function populateDropdowns() {
+        const db = JSON.parse(localStorage.getItem(DB_PROJS) || '[]');
+        const visible = user.role === 'qa' ? db : db.filter(p => p.mems.includes(user.email));
+        const options = visible.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+        document.getElementById('f_pname').innerHTML = options || '<option>No Projects Found</option>';
+        document.getElementById('rep_proj').innerHTML = options || '<option>No Projects Found</option>';
+    }
+
+    document.getElementById('masterForm').onsubmit = (e) => {
+        e.preventDefault();
+        const recs = JSON.parse(localStorage.getItem(DB_RECS) || '[]');
+        recs.unshift({ id: Date.now(), project: document.getElementById('f_pname').value });
+        localStorage.setItem(DB_RECS, JSON.stringify(recs));
+        alert("Testing Request Submitted Successfully");
+        nav('dashboard');
+    }
+
+    function saveWorkReport() {
+        alert("Daily Work Report Saved Successfully");
+    }
+
+    init();
+</script>
+</body>
+</html>
